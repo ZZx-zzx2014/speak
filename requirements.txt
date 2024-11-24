@@ -1,0 +1,4 @@
+Flask
+Werkzeug
+Flask-SocketIO
+eventlet
