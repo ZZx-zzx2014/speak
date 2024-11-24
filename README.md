@@ -12,3 +12,5 @@ myenv/bin/activate
 pip install Flask
 # 启动
 python app.py
+# 管理员密码
+名称：root 密码:root
