@@ -6,7 +6,7 @@ from flask_socketio import SocketIO, join_room, leave_room, send
 app = Flask(__name__)
 app.secret_key = 'your_secret_key'
 socketio = SocketIO(app)
-
+# 测试
 def init_db():
     try:
         conn = sqlite3.connect('database.db')
@@ -134,4 +134,5 @@ def index():
 
 if __name__ == '__main__':
     print("启动 Flask 服务器在端口 5002...")
+
     socketio.run(app, debug=True, host='172.16,250.30', port=5002)
