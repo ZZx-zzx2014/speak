@@ -25,6 +25,13 @@ def extract_csrf(client, pages=CSRF_PAGES):
     raise AssertionError('无法从 %s 中获取 CSRF 令牌' % (pages,))
 
 
+#: Turnstile must be forced *off* in tests: ``Config`` reads the developer's real
+#: environment (and ``.env``) at import time, so a locally configured site key
+#: would otherwise make every login/registration test fail.  Tests that exercise
+#: Turnstile pass their own keys explicitly.
+TURNSTILE_OFF = {'TURNSTILE_SITE_KEY': '', 'TURNSTILE_SECRET_KEY': ''}
+
+
 class AppTestCase(unittest.TestCase):
     """Creates a fresh application backed by a throwaway database."""
 
@@ -40,6 +47,7 @@ class AppTestCase(unittest.TestCase):
             DATABASE=self.database,
             ADMIN_PASSWORD=self.ADMIN_PASSWORD,
             ADMIN_USERNAME=self.ADMIN_USERNAME,
+            **TURNSTILE_OFF
         )
         self.client = self.app.test_client()
 

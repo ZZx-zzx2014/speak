@@ -10,7 +10,7 @@ from werkzeug.security import generate_password_hash
 from speak import create_app
 from speak.db import get_db
 
-from .base import AppTestCase, extract_csrf
+from .base import TURNSTILE_OFF, AppTestCase, extract_csrf
 
 
 class PublicPagesTest(AppTestCase):
@@ -167,6 +167,7 @@ class RateLimitTest(unittest.TestCase):
                 ADMIN_PASSWORD='admin-secret-123',
                 LOGIN_MAX_ATTEMPTS=3,
                 LOGIN_WINDOW_SECONDS=60,
+                **TURNSTILE_OFF
             )
             client = app.test_client()
             statuses = []
@@ -267,7 +268,8 @@ class LegacyDatabaseTest(unittest.TestCase):
             connection.commit()
             connection.close()
 
-            app = create_app(SECRET_KEY='test-secret-key', TESTING=True, DATABASE=path)
+            app = create_app(SECRET_KEY='test-secret-key', TESTING=True,
+                             DATABASE=path, **TURNSTILE_OFF)
             client = app.test_client()
 
             # The pre-existing administrator can still log in ...

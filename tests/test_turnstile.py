@@ -97,6 +97,9 @@ class TurnstileFormTest(unittest.TestCase):
             'TESTING': True,
             'DATABASE': os.path.join(tmp.name, 'test.db'),
             'ADMIN_PASSWORD': 'admin-secret-123',
+            # Off by default so the developer's own .env cannot influence tests.
+            'TURNSTILE_SITE_KEY': '',
+            'TURNSTILE_SECRET_KEY': '',
         }
         config.update(overrides)
         return create_app(**config).test_client()

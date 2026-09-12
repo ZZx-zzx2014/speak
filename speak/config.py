@@ -10,8 +10,15 @@ import os
 from datetime import timedelta
 from pathlib import Path
 
+from .env import load_dotenv
+
 #: Project root, i.e. the directory that contains ``app.py``.
 BASE_DIR = Path(__file__).resolve().parent.parent
+
+# Load <project>/.env before the settings below read ``os.environ``.  Real
+# environment variables always win over the file, so exporting a variable in the
+# shell still overrides whatever ``.env`` contains.
+load_dotenv(BASE_DIR / '.env')
 
 
 def env_bool(name, default=False):
