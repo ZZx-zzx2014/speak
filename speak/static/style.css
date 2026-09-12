@@ -360,6 +360,107 @@ a:focus-visible {
   color: var(--muted);
 }
 
+/* ---------------------------------------------------------------- admin settings */
+
+.announcement {
+  margin: 0 0 1rem;
+  padding: 0.6rem 0.9rem;
+  border: 1px solid #f0dfae;
+  border-radius: 8px;
+  background: #fff9e8;
+  color: #7a5c12;
+  font-size: 0.9rem;
+  white-space: pre-wrap;
+}
+
+.card + .card {
+  margin-top: 1.25rem;
+}
+
+.card h2 {
+  font-size: 1.1rem;
+  margin: 0 0 0.6rem;
+}
+
+textarea {
+  padding: 0.55rem 0.7rem;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  font: inherit;
+  background: #fbfcfe;
+  color: inherit;
+  resize: vertical;
+}
+
+.button-row {
+  display: flex;
+  gap: 0.6rem;
+  flex-wrap: wrap;
+}
+
+.button-row .button {
+  margin-top: 0.6rem;
+}
+
+.guide {
+  margin-top: 1.1rem;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  background: #fbfcfe;
+  padding: 0.7rem 0.9rem;
+}
+
+.guide summary {
+  cursor: pointer;
+  font-weight: 600;
+}
+
+.guide-steps {
+  margin: 0.7rem 0 0.6rem;
+  padding-left: 1.3rem;
+}
+
+.guide-steps li {
+  margin-bottom: 0.45rem;
+}
+
+.guide code {
+  padding: 0.05rem 0.3rem;
+  border-radius: 4px;
+  background: #eef2f9;
+  font-size: 0.88em;
+}
+
+/* ---------------------------------------------------------------- modal */
+
+.modal {
+  max-width: 460px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 1.25rem 1.5rem;
+  box-shadow: 0 12px 32px rgba(24, 39, 75, 0.18);
+}
+
+.modal::backdrop {
+  background: rgba(24, 39, 75, 0.45);
+}
+
+.modal-list {
+  margin: 0.5rem 0 1rem;
+  padding-left: 1.3rem;
+  color: var(--muted);
+  font-size: 0.92rem;
+}
+
+.modal .actions {
+  justify-content: flex-start;
+  margin-top: 0.5rem;
+}
+
+.modal .button {
+  margin-top: 0;
+}
+
 @media (max-width: 600px) {
   .chat-log {
     height: 55vh;

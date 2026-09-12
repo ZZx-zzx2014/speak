@@ -79,6 +79,26 @@ class VerifyUnitTest(unittest.TestCase):
 
         self.assertFalse(verify('tok', None, TURNSTILE_CONFIG, opener=opener))
 
+    def test_fail_open_allows_login_when_cloudflare_is_unreachable(self):
+        """A DNS/network outage must not lock every user out when opted in."""
+        def opener(request, timeout=None):
+            raise OSError('dns down')
+
+        config = dict(TURNSTILE_CONFIG, TURNSTILE_FAIL_OPEN=True)
+        self.assertTrue(verify('tok', None, config, opener=opener))
+
+    def test_fail_open_still_rejects_a_missing_token(self):
+        """Fail-open only covers outages; omitting the token is still refused."""
+        config = dict(TURNSTILE_CONFIG, TURNSTILE_FAIL_OPEN=True)
+        self.assertFalse(verify('', None, config))
+
+    def test_fail_open_does_not_cover_unparsable_replies(self):
+        def opener(request, timeout=None):
+            return FakeResponse(b'<html>not json</html>')
+
+        config = dict(TURNSTILE_CONFIG, TURNSTILE_FAIL_OPEN=True)
+        self.assertFalse(verify('tok', None, config, opener=opener))
+
     def test_unparsable_reply_fails_closed(self):
         def opener(request, timeout=None):
             return FakeResponse(b'<html>not json</html>')

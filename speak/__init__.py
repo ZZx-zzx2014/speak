@@ -10,7 +10,7 @@ import os
 import secrets
 from pathlib import Path
 
-from flask import Flask, render_template
+from flask import Flask, render_template, session
 from flask_socketio import SocketIO
 
 from .config import Config
@@ -126,7 +126,7 @@ def create_app(config_object=Config, **overrides):
         engineio_logger=app.config['SOCKETIO_ENGINEIO_LOGGER'],
     )
 
-    from . import admin, auth, chat, db, security, turnstile
+    from . import admin, auth, chat, db, security, settings, turnstile
 
     db.init_app(app)
     security.init_app(app)
@@ -137,11 +137,31 @@ def create_app(config_object=Config, **overrides):
     app.register_blueprint(admin.bp)
 
     app.jinja_env.globals['socketio_client_urls'] = lambda: cdn_urls(app.config)
-    # Empty string when Turnstile is not configured, so templates can simply
-    # test ``{% if turnstile_site_key %}``.
-    app.jinja_env.globals['turnstile_site_key'] = (
-        app.config['TURNSTILE_SITE_KEY'] if turnstile.is_enabled(app.config) else ''
-    )
+
+    @app.context_processor
+    def inject_site_settings():
+        """Expose the runtime editable settings to every template.
+
+        ``show_admin_setup`` is popped here so the welcome dialog appears exactly
+        once, on the first page the administrator loads after logging in.
+        """
+        try:
+            return {
+                'site_name': settings.get('site_name'),
+                'site_announcement': settings.get('site_announcement'),
+                'turnstile_site_key': (
+                    settings.get('turnstile_site_key') if turnstile.is_enabled() else ''
+                ),
+                'show_admin_setup': session.pop('show_admin_setup', False),
+            }
+        except Exception:  # pragma: no cover - never break rendering
+            log.warning('注入站点设置失败', exc_info=True)
+            return {
+                'site_name': app.config['SITE_NAME'],
+                'site_announcement': app.config['SITE_ANNOUNCEMENT'],
+                'turnstile_site_key': '',
+                'show_admin_setup': False,
+            }
 
     _register_error_handlers(app)
 

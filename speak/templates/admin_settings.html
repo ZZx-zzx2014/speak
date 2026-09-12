@@ -1,0 +1,110 @@
+{% extends 'base.html' %}
+{% block title %}系统设置 · {{ site_name }}{% endblock %}
+{% block content %}
+
+  <section class="card">
+    <h2>站点基础信息</h2>
+    <form method="post" action="{{ url_for('admin.save_site_settings') }}" class="stack">
+      <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+
+      <label for="site_name">站点名称</label>
+      <input type="text" id="site_name" name="site_name" required maxlength="60"
+             value="{{ values.site_name }}">
+      <p class="hint">显示在浏览器标题和顶部导航。</p>
+
+      <label for="site_announcement">站点公告</label>
+      <textarea id="site_announcement" name="site_announcement" rows="3" maxlength="500"
+                placeholder="留空则不显示">{{ values.site_announcement }}</textarea>
+      <p class="hint">显示在每页顶部，留空则隐藏。</p>
+
+      <button type="submit" class="button primary">保存基础信息</button>
+    </form>
+  </section>
+
+  <section class="card">
+    <h2>Cloudflare 人机验证</h2>
+    <p class="muted">
+      当前状态：
+      {% if values.turnstile_site_key and values.turnstile_secret_key %}
+        <strong class="status-online">已开启</strong>
+      {% else %}
+        <strong class="status-connecting">未开启</strong>
+      {% endif %}
+      {% if 'environment' in (sources.turnstile_site_key, sources.turnstile_secret_key) %}
+        <span class="hint">（当前值来自环境变量；在本页保存后，将以本页的设置为准）</span>
+      {% endif %}
+    </p>
+
+    <form method="post" action="{{ url_for('admin.save_turnstile_settings') }}" class="stack">
+      <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+
+      <label for="turnstile_site_key">Site Key（站点密钥）</label>
+      <input type="text" id="turnstile_site_key" name="turnstile_site_key"
+             value="{{ values.turnstile_site_key }}" autocomplete="off"
+             spellcheck="false" placeholder="0x4AAAAAAA...">
+
+      <label for="turnstile_secret_key">Secret Key（密钥）</label>
+      <input type="text" id="turnstile_secret_key" name="turnstile_secret_key"
+             value="{{ values.turnstile_secret_key }}" autocomplete="off"
+             spellcheck="false" placeholder="0x4AAAAAAA...">
+
+      <div class="button-row">
+        <button type="submit" name="action" value="save" class="button primary">保存</button>
+        <button type="submit" name="action" value="verify" class="button">验证密钥</button>
+        <button type="submit" name="action" value="use_test_keys" class="button">填入测试密钥</button>
+      </div>
+      <p class="hint">两个密钥都留空即关闭人机验证。</p>
+    </form>
+
+    <details class="guide" open>
+      <summary>怎么在 Cloudflare 里拿到这两个密钥？</summary>
+      <ol class="guide-steps">
+        <li>打开 Cloudflare 控制台
+          <a href="https://dash.cloudflare.com/" target="_blank" rel="noopener noreferrer">dash.cloudflare.com</a>
+          （没有账号可免费注册，Turnstile 免费额度足够个人站点使用）。</li>
+        <li>在左侧菜单找到 <strong>Turnstile</strong>，点 <strong>Add site</strong>（添加站点）。</li>
+        <li><strong>Site name</strong> 随便填，例如 <code>{{ site_name }}</code>。</li>
+        <li><strong>Domain</strong> 填你实际访问这个站点的域名。只在本机调试可以填 <code>localhost</code>。</li>
+        <li><strong>Widget Mode</strong> 选 <strong>Managed</strong>（推荐，由 Cloudflare 自动决定是否需要点击验证）。</li>
+        <li>创建完成后页面会给出 <strong>Site Key</strong> 与 <strong>Secret Key</strong>，
+          分别复制到上面的两个输入框。</li>
+        <li>点 <strong>保存</strong>，再点 <strong>验证密钥</strong>，确认 Cloudflare 能识别它。</li>
+        <li>用无痕窗口打开
+          <a href="{{ url_for('auth.login') }}">登录页</a>，应当能看到验证组件。</li>
+      </ol>
+
+      <p class="hint">
+        <strong>想先不注册 Cloudflare 试试流程？</strong>
+        点上面的 <strong>填入测试密钥</strong>，会填入 Cloudflare 官方测试密钥
+        （验证永远通过），用来确认整条链路是否打通；确认无误后再换成正式密钥。
+      </p>
+      <p class="hint">
+        <strong>注意：</strong>Site Key 与域名绑定。如果只填了 <code>localhost</code>，
+        却通过局域网 IP 或其它域名访问，验证组件可能无法通过。
+      </p>
+    </details>
+  </section>
+
+  <section class="card">
+    <h2>修改管理密码</h2>
+    <form method="post" action="{{ url_for('admin.change_password') }}" class="stack">
+      <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+
+      <label for="current_password">当前密码</label>
+      <input type="password" id="current_password" name="current_password" required
+             autocomplete="current-password">
+
+      <label for="new_password">新密码</label>
+      <input type="password" id="new_password" name="new_password" required
+             autocomplete="new-password" minlength="8" maxlength="128">
+      <p class="hint">至少 8 个字符。</p>
+
+      <label for="new_password2">确认新密码</label>
+      <input type="password" id="new_password2" name="new_password2" required
+             autocomplete="new-password" minlength="8" maxlength="128">
+
+      <button type="submit" class="button primary">更新密码</button>
+    </form>
+  </section>
+
+{% endblock %}

@@ -3,13 +3,13 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>{% block title %}Speak 聊天室{% endblock %}</title>
+  <title>{% block title %}{{ site_name }}{% endblock %}</title>
   <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
   {% block head %}{% endblock %}
 </head>
 <body>
   <header class="topbar">
-    <a class="brand" href="{{ url_for('chat.index') }}">Speak 聊天室</a>
+    <a class="brand" href="{{ url_for('chat.index') }}">{{ site_name }}</a>
     <nav class="nav">
       {% if session.get('username') %}
         <span class="nav-user">
@@ -18,6 +18,7 @@
         <a href="{{ url_for('chat.chat') }}">聊天</a>
         {% if session.get('is_admin') %}
           <a href="{{ url_for('admin.manage') }}">用户管理</a>
+          <a href="{{ url_for('admin.settings_page') }}">系统设置</a>
         {% endif %}
         <form class="inline-form" method="post" action="{{ url_for('auth.logout') }}">
           <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
@@ -31,9 +32,31 @@
   </header>
 
   <main class="page">
+    {% if site_announcement %}
+      <p class="announcement">{{ site_announcement }}</p>
+    {% endif %}
     {% include '_flash.html' %}
     {% block content %}{% endblock %}
   </main>
+
+  {% if show_admin_setup %}
+    {# Shown once, right after an administrator logs in.  Opened with
+       ``showModal()`` from admin.js so that no inline script is needed. #}
+    <dialog id="admin-setup" class="modal" aria-labelledby="admin-setup-title">
+      <h2 id="admin-setup-title">管理员设置</h2>
+      <p class="muted">你正以管理员身份登录。可以在这里完成以下配置：</p>
+      <ul class="modal-list">
+        <li>修改管理密码</li>
+        <li>站点名称与公告</li>
+        <li>Cloudflare 人机验证密钥（含分步引导）</li>
+      </ul>
+      <div class="actions">
+        <a class="button primary" href="{{ url_for('admin.settings_page') }}">立即前往设置</a>
+        <button type="button" class="button" id="admin-setup-close">稍后再说</button>
+      </div>
+    </dialog>
+    <script src="{{ url_for('static', filename='admin.js') }}" defer></script>
+  {% endif %}
 
   {% block scripts %}{% endblock %}
 </body>

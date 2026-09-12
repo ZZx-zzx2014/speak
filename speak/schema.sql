@@ -11,3 +11,12 @@ CREATE TABLE IF NOT EXISTS users (
 );
 
 CREATE INDEX IF NOT EXISTS idx_users_is_admin ON users (is_admin);
+
+-- Runtime editable settings (site name, Cloudflare keys, ...).  Values saved
+-- here take precedence over the environment so the operator can change them
+-- from the admin UI without redeploying.
+CREATE TABLE IF NOT EXISTS settings (
+    key        TEXT PRIMARY KEY,
+    value      TEXT NOT NULL DEFAULT '',
+    updated_at TEXT NOT NULL DEFAULT (datetime('now'))
+);

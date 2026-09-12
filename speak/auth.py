@@ -37,14 +37,11 @@ def _timing_equaliser_hash():
 def _human_verification_passed():
     """Run the Cloudflare Turnstile challenge for the current request.
 
-    Always returns ``True`` when Turnstile is not configured, so the forms keep
-    working out of the box.
+    Reads the runtime editable settings, so the keys entered in the admin UI
+    take effect immediately.  Always returns ``True`` when Turnstile is not
+    configured, so the forms keep working out of the box.
     """
-    return verify_turnstile(
-        request.form.get(RESPONSE_FIELD, ''),
-        request.remote_addr,
-        current_app.config,
-    )
+    return verify_turnstile(request.form.get(RESPONSE_FIELD, ''), request.remote_addr)
 
 
 @bp.route('/register', methods=['GET', 'POST'])
@@ -140,6 +137,9 @@ def login():
     session['username'] = row['username']
     session['is_admin'] = bool(row['is_admin'])
     session.permanent = True
+    if session['is_admin']:
+        # Nudge the administrator into the settings screen once, right after login.
+        session['show_admin_setup'] = True
     log.info('登录成功: %s', row['username'])
 
     flash('登录成功！', 'success')

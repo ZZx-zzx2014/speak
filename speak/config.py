@@ -120,12 +120,24 @@ class Config:
     LOGIN_MAX_ATTEMPTS = env_int('SPEAK_LOGIN_MAX_ATTEMPTS', 5)
     LOGIN_WINDOW_SECONDS = env_int('SPEAK_LOGIN_WINDOW_SECONDS', 300)
 
+    # --- 站点基础信息 ---------------------------------------------------------
+    #: Shown in the header and page titles.  Editable at runtime from the admin
+    #: settings page; the values here act as the initial defaults.
+    SITE_NAME = os.environ.get('SPEAK_SITE_NAME') or 'Speak 聊天室'
+    SITE_ANNOUNCEMENT = os.environ.get('SPEAK_SITE_ANNOUNCEMENT') or ''
+
     # --- Cloudflare Turnstile (人机验证) --------------------------------------
     #: Bot protection for the login and registration forms.  Disabled until both
     #: keys are set, so local development needs no Cloudflare account.
     TURNSTILE_SITE_KEY = os.environ.get('SPEAK_TURNSTILE_SITE_KEY') or ''
     TURNSTILE_SECRET_KEY = os.environ.get('SPEAK_TURNSTILE_SECRET_KEY') or ''
     TURNSTILE_TIMEOUT_SECONDS = env_int('SPEAK_TURNSTILE_TIMEOUT', 5)
+    #: What to do when the server cannot reach Cloudflare at all.
+    #: ``False`` (default) refuses the login — secure, but a DNS/network problem
+    #: locks *everyone* out.  Set to ``True`` if the host has unreliable access
+    #: to ``challenges.cloudflare.com``; a missing/invalid token is still
+    #: rejected either way, so bots cannot bypass the check by omitting it.
+    TURNSTILE_FAIL_OPEN = env_bool('SPEAK_TURNSTILE_FAIL_OPEN', False)
 
     # --- Response hardening --------------------------------------------------
     SECURITY_HEADERS = env_bool('SPEAK_SECURITY_HEADERS', True)

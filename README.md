@@ -17,6 +17,7 @@
 | --- | --- |
 | 用户系统 | 注册、登录、退出；密码使用 PBKDF2-SHA256 加盐哈希存储 |
 | 权限管理 | 普通用户 / 管理员两种角色，管理员可查看并删除普通用户 |
+| 系统设置 | 管理员登录后弹窗引导；界面内即可改管理密码、站点信息与 Cloudflare 密钥 |
 | 实时聊天 | 公共聊天室，支持消息广播、在线人数、上下线提醒 |
 | 消息历史 | 新加入的用户自动收到最近 50 条消息 |
 | 安全防护 | CSRF 校验、登录与消息限流、会话固定防护、CSP 等安全响应头 |
@@ -93,13 +94,16 @@ speak/
 │   ├── security.py         # CSRF、权限装饰器、限流、安全响应头
 │   ├── validators.py       # 用户名 / 密码 / 消息校验
 │   ├── auth.py             # 注册 / 登录 / 退出
-│   ├── admin.py            # 用户管理
+│   ├── admin.py            # 用户管理 + 系统设置
 │   ├── chat.py             # 首页 / 聊天页
 │   ├── events.py           # Socket.IO 事件与聊天状态
+│   ├── settings.py         # 可在线修改的设置（数据库优先，环境变量回退）
+│   ├── env.py              # 标准库实现的 .env 加载器
+│   ├── turnstile.py        # Cloudflare 人机验证校验
 │   ├── socketio_client.py  # 前端客户端版本自动匹配
-│   ├── static/             # style.css、chat.js
-│   └── templates/          # Jinja2 模板
-└── tests/                  # 61 个自动化测试
+│   ├── static/             # style.css、chat.js、admin.js
+│   └── templates/          # Jinja2 模板（含 admin_settings.html）
+└── tests/                  # 111 个自动化测试
 ```
 
 ---
@@ -107,6 +111,8 @@ speak/
 ## 配置项
 
 全部通过环境变量配置，无需修改源码。完整示例见 [`.env.example`](.env.example)。
+其中**站点信息与 Cloudflare 密钥可以直接在管理员「系统设置」页面里修改**，
+页面保存的值优先于环境变量。
 
 **核心**
 
@@ -154,6 +160,16 @@ speak/
 | `SPEAK_ADMIN_USERNAME` | `root` | 初始管理员用户名 |
 | `SPEAK_ADMIN_PASSWORD` | 见上文 | 初始管理员密码 |
 
+**站点基础信息**
+
+| 变量 | 默认值 | 说明 |
+| --- | --- | --- |
+| `SPEAK_SITE_NAME` | `Speak 聊天室` | 站点名称，显示在标题与顶部导航 |
+| `SPEAK_SITE_ANNOUNCEMENT` | 空 | 站点公告，显示在每页顶部 |
+
+> 这两项与下面的 Cloudflare 密钥都可以在**管理员「系统设置」页面**直接修改，
+> 页面保存的值优先于环境变量。环境变量只作为初始值。
+
 **人机验证（Cloudflare Turnstile，可选）**
 
 | 变量 | 默认值 | 说明 |
@@ -161,6 +177,7 @@ speak/
 | `SPEAK_TURNSTILE_SITE_KEY` | 空 | 站点公钥；留空即关闭人机验证 |
 | `SPEAK_TURNSTILE_SECRET_KEY` | 空 | 服务端密钥；两个 key 都填才生效 |
 | `SPEAK_TURNSTILE_TIMEOUT` | `5` | 校验请求超时（秒） |
+| `SPEAK_TURNSTILE_FAIL_OPEN` | `false` | 服务器**连不上** Cloudflare 时是否放行登录 |
 
 > **启用步骤：** 到 <https://dash.cloudflare.com/> → Turnstile → Add site，
 > 拿到 Site Key 与 Secret Key 后设为上面两个环境变量并重启服务。
@@ -186,6 +203,27 @@ speak/
 3. 消息以纯文本渲染，不支持 HTML 或 Markdown；发送过于频繁会被限流。
 4. 管理员访问 `/manage` 可查看与删除普通用户；管理员账户和当前登录账户不会被列出。
 5. 右上角「退出登录」可清除会话。
+
+### 管理员系统设置（`/admin/settings`）
+
+管理员登录后会**自动弹出一个设置对话框**（只弹一次），可直接跳转到系统设置页面。
+该页面提供三组功能：
+
+| 分组 | 可做的事 |
+| --- | --- |
+| 站点基础信息 | 修改站点名称与公告，立即生效 |
+| Cloudflare 人机验证 | 填写 / 验证 / 清除 Site Key 与 Secret Key，并内置**分步操作引导** |
+| 修改管理密码 | 需先验证当前密码；新密码至少 8 位且不能与旧密码相同 |
+
+**Cloudflare 配置引导**内嵌在页面里，包含：
+
+- 从注册 Cloudflare 到创建 Turnstile 站点的 8 步图文说明，以及控制台直达链接；
+- **验证密钥**按钮：向 Cloudflare 发一次真实请求，判断密钥是否有效
+  （用一个假令牌来探测，能区分"密钥错了"和"令牌是假的"）；
+- **填入测试密钥**按钮：一键填入 Cloudflare 官方测试密钥（验证永远通过），
+  用于在正式接入前先确认整条链路是否打通。
+
+> 页面会标注每个值来源于「数据库 / 环境变量 / 默认值」，避免改了不生效时找不到原因。
 
 ---
 
@@ -244,8 +282,9 @@ speak/
 python -m unittest discover -s tests -t . -v
 ```
 
-共 **75 个测试**，覆盖 HTTP 层（认证、鉴权、CSRF、安全响应头、旧库迁移）、
-Socket.IO 层（连接鉴权、广播、历史回放、限流）、Turnstile 人机验证与纯函数单元测试。
+共 **111 个测试**，覆盖 HTTP 层（认证、鉴权、CSRF、安全响应头、旧库迁移）、
+Socket.IO 层（连接鉴权、广播、历史回放、限流）、Turnstile 人机验证、
+管理员系统设置（改密码、站点信息、Cloudflare 配置）、`.env` 解析与纯函数单元测试。
 
 ---
 
@@ -357,7 +396,10 @@ Flask 3.1 / Werkzeug 3.1 要求 Python ≥ 3.9，因此 `requirements.txt` 用�
 - 限流器为进程内实现，多 worker 下限流阈值按进程独立计算。
 - 聊天记录不落库，进程重启后历史消息清空。
 - 仅一个公共聊天室，暂不支持多房间或私聊。
-- 未提供修改密码 / 找回密码功能。
+- 修改密码只覆盖管理员自己的账户；普通用户仍无法自行改密或找回密码。
+- 系统设置（站点信息、Cloudflare 密钥）保存在数据库中，多 worker 部署时共享同一份。
+- 开启人机验证后，服务器必须能访问 `challenges.cloudflare.com`；
+  若该域名不可达，默认会拒绝所有登录（可用 `SPEAK_TURNSTILE_FAIL_OPEN=true` 放行）。
 
 ---
 
