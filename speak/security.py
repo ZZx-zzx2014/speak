@@ -160,6 +160,14 @@ def client_key(username=''):
 # --------------------------------------------------------------------------- #
 def apply_security_headers(response):
     """Attach the standard hardening headers to every response."""
+    # Rendered HTML embeds the protocol-matched Socket.IO client URL (see
+    # speak/socketio_client.py).  If the browser served a stale copy from cache
+    # after a dependency upgrade, it would load a client speaking the wrong
+    # Engine.IO version and the chat would fail with "xhr poll error".
+    # Static assets are served by a different route and keep normal caching.
+    if response.mimetype == 'text/html':
+        response.headers['Cache-Control'] = 'no-store'
+
     if not current_app.config['SECURITY_HEADERS']:
         return response
     response.headers.setdefault('X-Content-Type-Options', 'nosniff')

@@ -30,6 +30,14 @@ class PublicPagesTest(AppTestCase):
         self.assertEqual(response.headers['X-Frame-Options'], 'DENY')
         self.assertIn("default-src 'self'", response.headers['Content-Security-Policy'])
 
+    def test_html_is_not_cached_but_static_assets_are(self):
+        """Stale HTML would point the browser at a mismatched Socket.IO client."""
+        page = self.client.get('/')
+        self.assertEqual(page.headers.get('Cache-Control'), 'no-store')
+
+        asset = self.client.get('/static/style.css')
+        self.assertNotEqual(asset.headers.get('Cache-Control'), 'no-store')
+
     def test_chat_redirects_anonymous_users(self):
         response = self.client.get('/chat')
         self.assertEqual(response.status_code, 302)
