@@ -38,6 +38,12 @@ class PublicPagesTest(AppTestCase):
         asset = self.client.get('/static/style.css')
         self.assertNotEqual(asset.headers.get('Cache-Control'), 'no-store')
 
+    def test_bundled_socketio_client_is_served(self):
+        """The vendored client must be reachable so a blocked CDN cannot break chat."""
+        response = self.client.get('/static/vendor/socket.io.min.js')
+        self.assertEqual(response.status_code, 200)
+        self.assertGreater(len(response.get_data()), 10000)
+
     def test_chat_redirects_anonymous_users(self):
         response = self.client.get('/chat')
         self.assertEqual(response.status_code, 302)

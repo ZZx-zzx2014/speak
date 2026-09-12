@@ -48,4 +48,5 @@ version = { attr = "speak.__version__" }
 dependencies = { file = ["requirements.txt"] }
 
 [tool.setuptools.package-data]
-speak = ["schema.sql", "templates/*.html", "static/*.css", "static/*.js"]
+speak = ["schema.sql", "templates/*.html", "static/*.css", "static/*.js",
+         "static/vendor/*.js"]

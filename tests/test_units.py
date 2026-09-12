@@ -147,7 +147,18 @@ class SocketIOClientVersionTest(unittest.TestCase):
             'SOCKETIO_CLIENT_VERSION': None,
             'SOCKETIO_CDN_BASES': ['https://example.com/io-{version}.js'],
         })
-        self.assertEqual(urls, ['https://example.com/io-%s.js' % detect_client_version()])
+        self.assertEqual(urls[-1], 'https://example.com/io-%s.js' % detect_client_version())
+
+    def test_bundled_client_is_served_first(self):
+        """A blocked CDN must not break the chat: use the local copy first."""
+        from speak.socketio_client import VENDORED_CLIENT_VERSION
+        urls = cdn_urls({'SOCKETIO_CLIENT_VERSION': None, 'SOCKETIO_CDN_BASES': []})
+        if detect_client_version() == VENDORED_CLIENT_VERSION:
+            self.assertTrue(urls[0].endswith('/static/vendor/socket.io.min.js'), urls)
+            self.assertGreater(len(urls), 1, '仍应保留 CDN 作为回退')
+        else:
+            # A mismatched bundle must never be offered.
+            self.assertNotIn('vendor/socket.io.min.js', ' '.join(urls))
 
     def test_explicit_configuration_wins(self):
         self.assertEqual(resolve_client_version('9.9.9'), '9.9.9')

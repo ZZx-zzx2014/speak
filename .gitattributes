@@ -22,3 +22,6 @@
 *.md linguist-documentation
 CHANGELOG.md linguist-documentation
 LICENSE linguist-documentation
+
+# 内置的第三方资源不计入本项目的语言统计
+speak/static/vendor/* linguist-vendored

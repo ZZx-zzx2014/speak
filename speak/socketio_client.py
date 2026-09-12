@@ -38,6 +38,11 @@ _CLIENT_VERSION_BY_ENGINEIO_MAJOR = {
 }
 _FALLBACK_CLIENT_VERSION = '4.8.3'
 
+#: Version of the copy bundled in ``speak/static/vendor``.  Bump it together
+#: with the file whenever the client is updated.
+VENDORED_CLIENT_VERSION = '4.8.3'
+VENDORED_CLIENT_PATH = 'vendor/socket.io.min.js'
+
 #: CDN mirrors per Engine.IO generation, tried in order by the browser.
 #: ``{version}`` is replaced with the resolved client version.
 _CDN_TEMPLATES_BY_ENGINEIO_MAJOR = {
@@ -102,12 +107,44 @@ def resolve_client_version(configured=None):
     return version
 
 
-def cdn_urls(config):
-    """Ordered list of CDN URLs the browser should try for the client.
+def _static_url(filename):
+    """Build a static URL, tolerating a missing application context."""
+    try:
+        from flask import url_for
+        return url_for('static', filename=filename)
+    except Exception:  # pragma: no cover - only in the unit tests
+        return '/static/' + filename
 
-    ``SPEAK_SOCKETIO_CDN_BASES`` overrides the built-in mirrors; leave it empty
-    to use the set that matches the installed Engine.IO generation.
+
+def vendored_client_url():
+    """URL of the locally bundled client, or ``None`` when it does not match.
+
+    The client is committed under ``speak/static/vendor`` so the chat keeps
+    working when a CDN mirror is blocked or unreachable.  The file is version
+    specific, so it is only offered when it matches the detected generation.
+    """
+    needed = detect_client_version()
+    if needed != VENDORED_CLIENT_VERSION:
+        log.warning(
+            '本地内置的 Socket.IO 客户端为 %s，与当前 engineio 需要的 %s 不匹配，'
+            '将回退到 CDN。', VENDORED_CLIENT_VERSION, needed,
+        )
+        return None
+    return _static_url(VENDORED_CLIENT_PATH)
+
+
+def cdn_urls(config):
+    """Ordered list of URLs the browser should try for the client.
+
+    The bundled local copy comes first (most reliable), then the CDN mirrors.
+    ``SPEAK_SOCKETIO_CDN_BASES`` replaces the built-in mirror list; leave it
+    empty to use the set matching the installed Engine.IO generation.
     """
     version = resolve_client_version(config.get('SOCKETIO_CLIENT_VERSION'))
     templates = config.get('SOCKETIO_CDN_BASES') or detect_cdn_templates()
-    return [template.format(version=version) for template in templates if template]
+    urls = [template.format(version=version) for template in templates if template]
+
+    local = vendored_client_url()
+    if local and local not in urls:
+        urls.insert(0, local)
+    return urls
