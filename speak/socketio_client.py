@@ -24,6 +24,11 @@ import logging
 
 import engineio
 
+try:  # Python >= 3.8
+    from importlib.metadata import version as _distribution_version
+except ImportError:  # pragma: no cover - only on very old interpreters
+    _distribution_version = None
+
 log = logging.getLogger(__name__)
 
 #: Newest browser release speaking each Engine.IO protocol generation.
@@ -50,11 +55,26 @@ _CDN_TEMPLATES_BY_ENGINEIO_MAJOR = {
 }
 
 
+def engineio_version():
+    """Return the installed ``python-engineio`` version string.
+
+    ``python-engineio`` 4.14 removed the module level ``engineio.__version__``
+    attribute, so the distribution metadata is the primary source here and the
+    module attribute is only a fallback for older releases.
+    """
+    if _distribution_version is not None:
+        try:
+            return _distribution_version('python-engineio')
+        except Exception:
+            pass
+    return getattr(engineio, '__version__', '')
+
+
 def engineio_major():
     """Major version of the installed ``python-engineio``."""
     try:
-        return int(str(engineio.__version__).split('.')[0])
-    except (AttributeError, TypeError, ValueError):  # pragma: no cover
+        return int(str(engineio_version()).split('.')[0])
+    except (TypeError, ValueError):
         return 4
 
 
@@ -78,7 +98,7 @@ def resolve_client_version(configured=None):
         return configured
     version = detect_client_version()
     log.debug('检测到 python-engineio %s，使用 Socket.IO 客户端 %s',
-              engineio.__version__, version)
+              engineio_version(), version)
     return version
 
 

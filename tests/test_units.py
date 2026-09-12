@@ -8,7 +8,7 @@ from speak.events import ChatState
 from speak.security import SlidingWindowLimiter
 from speak.socketio_client import (
     cdn_urls, detect_cdn_templates, detect_client_version, engineio_major,
-    resolve_client_version,
+    engineio_version, resolve_client_version,
 )
 from speak.validators import (
     ValidationError, safe_redirect_target, sanitise_message, validate_password,
@@ -113,9 +113,24 @@ class SlidingWindowLimiterTest(unittest.TestCase):
 
 class SocketIOClientVersionTest(unittest.TestCase):
     def test_detection_matches_the_installed_engineio(self):
-        major = int(str(engineio.__version__).split('.')[0])
-        expected = '2.5.0' if major < 4 else '4.8.3'
+        expected = '2.5.0' if engineio_major() < 4 else '4.8.3'
         self.assertEqual(detect_client_version(), expected)
+
+    def test_version_lookup_survives_missing_module_attribute(self):
+        """python-engineio 4.14 removed ``engineio.__version__``.
+
+        This mirrors the CI failure where every version lookup raised
+        ``AttributeError``; the lookup must fall back to distribution metadata.
+        """
+        saved = getattr(engineio, '__version__', None)
+        try:
+            if hasattr(engineio, '__version__'):
+                del engineio.__version__
+            self.assertTrue(engineio_version(), '应能从发行包元数据读到版本')
+            self.assertIn(engineio_major(), (3, 4))
+        finally:
+            if saved is not None:
+                engineio.__version__ = saved
 
     def test_cdn_file_names_match_the_client_generation(self):
         """socket.io-client 2.x has no dist/socket.io.min.js on npm."""
