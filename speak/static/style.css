@@ -1,0 +1,371 @@
+/* Speak chat room — single stylesheet, no framework, no inline styles so that
+   a strict Content-Security-Policy can be used. */
+
+:root {
+  --bg: #f4f6fb;
+  --surface: #ffffff;
+  --border: #dde3ee;
+  --text: #1f2733;
+  --muted: #6b7686;
+  --primary: #2f6fed;
+  --primary-dark: #245bd0;
+  --danger: #d64545;
+  --success: #2f9e63;
+  --radius: 10px;
+  --shadow: 0 1px 3px rgba(24, 39, 75, 0.08);
+}
+
+* {
+  box-sizing: border-box;
+}
+
+body {
+  margin: 0;
+  background: var(--bg);
+  color: var(--text);
+  font-family: system-ui, -apple-system, "Segoe UI", "PingFang SC",
+    "Microsoft YaHei", sans-serif;
+  font-size: 15px;
+  line-height: 1.6;
+}
+
+a {
+  color: var(--primary);
+  text-decoration: none;
+}
+
+a:hover {
+  text-decoration: underline;
+}
+
+h1 {
+  font-size: 1.35rem;
+  margin: 0 0 0.75rem;
+}
+
+/* ---------------------------------------------------------------- layout */
+
+.topbar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  flex-wrap: wrap;
+  padding: 0.75rem 1.25rem;
+  background: var(--surface);
+  border-bottom: 1px solid var(--border);
+  box-shadow: var(--shadow);
+}
+
+.brand {
+  font-weight: 700;
+  font-size: 1.05rem;
+  color: var(--text);
+}
+
+.nav {
+  display: flex;
+  align-items: center;
+  gap: 0.9rem;
+  flex-wrap: wrap;
+}
+
+.nav-user {
+  color: var(--muted);
+}
+
+.badge {
+  margin-left: 0.35rem;
+  padding: 0.05rem 0.4rem;
+  border-radius: 999px;
+  background: #e8f0ff;
+  color: var(--primary-dark);
+  font-size: 0.72rem;
+  vertical-align: middle;
+}
+
+.page {
+  max-width: 900px;
+  margin: 1.5rem auto;
+  padding: 0 1rem;
+}
+
+.card {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  box-shadow: var(--shadow);
+  padding: 1.25rem 1.5rem;
+}
+
+.centered {
+  text-align: center;
+}
+
+.muted {
+  color: var(--muted);
+  font-size: 0.9rem;
+}
+
+.hint {
+  margin: -0.4rem 0 0.2rem;
+  color: var(--muted);
+  font-size: 0.82rem;
+}
+
+.actions {
+  display: flex;
+  gap: 0.75rem;
+  justify-content: center;
+  margin-top: 1rem;
+}
+
+/* ---------------------------------------------------------------- forms */
+
+.stack {
+  display: flex;
+  flex-direction: column;
+  gap: 0.35rem;
+  max-width: 380px;
+}
+
+input[type="text"],
+input[type="password"] {
+  padding: 0.55rem 0.7rem;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  font: inherit;
+  background: #fbfcfe;
+  color: inherit;
+}
+
+input:focus-visible,
+button:focus-visible,
+a:focus-visible {
+  outline: 2px solid var(--primary);
+  outline-offset: 2px;
+}
+
+.button {
+  display: inline-block;
+  margin-top: 0.6rem;
+  padding: 0.55rem 1.1rem;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  background: var(--surface);
+  color: var(--text);
+  font: inherit;
+  cursor: pointer;
+}
+
+.button:hover {
+  background: #f0f3f9;
+  text-decoration: none;
+}
+
+.button.primary {
+  background: var(--primary);
+  border-color: var(--primary);
+  color: #fff;
+}
+
+.button.primary:hover {
+  background: var(--primary-dark);
+}
+
+.button.danger {
+  border-color: #f0c4c4;
+  color: var(--danger);
+  margin-top: 0;
+}
+
+.button.danger:hover {
+  background: #fdf0f0;
+}
+
+.inline-form {
+  display: inline;
+  margin: 0;
+}
+
+.link-button {
+  border: 0;
+  background: none;
+  padding: 0;
+  font: inherit;
+  color: var(--primary);
+  cursor: pointer;
+}
+
+.link-button:hover {
+  text-decoration: underline;
+}
+
+/* ---------------------------------------------------------------- flash */
+
+.flashes {
+  list-style: none;
+  margin: 0 0 1rem;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.flash {
+  padding: 0.6rem 0.9rem;
+  border-radius: 8px;
+  border: 1px solid var(--border);
+  background: var(--surface);
+  font-size: 0.92rem;
+}
+
+.flash-success {
+  border-color: #bfe3cd;
+  background: #eefaf3;
+  color: #1f6b45;
+}
+
+.flash-danger {
+  border-color: #f2c8c8;
+  background: #fdf1f1;
+  color: #a53434;
+}
+
+/* ---------------------------------------------------------------- table */
+
+.table {
+  width: 100%;
+  border-collapse: collapse;
+}
+
+.table th,
+.table td {
+  text-align: left;
+  padding: 0.55rem 0.6rem;
+  border-bottom: 1px solid var(--border);
+}
+
+.table th {
+  font-size: 0.85rem;
+  color: var(--muted);
+  font-weight: 600;
+}
+
+/* ---------------------------------------------------------------- chat */
+
+.chat {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  box-shadow: var(--shadow);
+  padding: 1rem;
+}
+
+.chat-meta {
+  display: flex;
+  align-items: center;
+  gap: 0.9rem;
+  flex-wrap: wrap;
+  padding-bottom: 0.6rem;
+  border-bottom: 1px solid var(--border);
+  font-size: 0.86rem;
+}
+
+.status {
+  font-weight: 600;
+}
+
+.status-online {
+  color: var(--success);
+}
+
+.status-offline {
+  color: var(--danger);
+}
+
+.status-connecting {
+  color: var(--muted);
+}
+
+.presence {
+  color: var(--muted);
+}
+
+.chat-log {
+  height: 420px;
+  overflow-y: auto;
+  padding: 0.75rem 0.25rem;
+  overscroll-behavior: contain;
+}
+
+.chat-log ul {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+
+.msg {
+  padding: 0.3rem 0.4rem;
+  border-radius: 8px;
+  word-break: break-word;
+  white-space: pre-wrap;
+}
+
+.msg-chat:hover {
+  background: #f7f9fd;
+}
+
+.msg .who {
+  font-weight: 600;
+  margin-right: 0.2rem;
+}
+
+.msg .time {
+  margin-left: 0.5rem;
+  color: var(--muted);
+  font-size: 0.76rem;
+}
+
+.msg-system {
+  color: var(--muted);
+  font-size: 0.85rem;
+  font-style: italic;
+}
+
+.chat-form {
+  display: flex;
+  gap: 0.6rem;
+  padding-top: 0.75rem;
+  border-top: 1px solid var(--border);
+}
+
+.chat-form input {
+  flex: 1;
+}
+
+.chat-form .button {
+  margin-top: 0;
+}
+
+/* ---------------------------------------------------------------- error */
+
+.error-code {
+  font-size: 3rem;
+  margin: 0;
+  color: var(--primary);
+}
+
+.error-message {
+  color: var(--muted);
+}
+
+@media (max-width: 600px) {
+  .chat-log {
+    height: 55vh;
+  }
+
+  .page {
+    margin: 1rem auto;
+  }
+}

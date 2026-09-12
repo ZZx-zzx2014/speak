@@ -1,0 +1,37 @@
+{% extends 'base.html' %}
+{% block title %}用户管理 · Speak 聊天室{% endblock %}
+{% block content %}
+  <section class="card">
+    <h1>用户管理</h1>
+    {% if users %}
+      <table class="table">
+        <thead>
+          <tr>
+            <th scope="col">ID</th>
+            <th scope="col">用户名</th>
+            <th scope="col">注册时间 (UTC)</th>
+            <th scope="col">操作</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for user in users %}
+            <tr>
+              <td>{{ user['id'] }}</td>
+              <td>{{ user['username'] }}</td>
+              <td class="muted">{{ user['created_at'] }}</td>
+              <td>
+                <form method="post" class="inline-form"
+                      action="{{ url_for('admin.delete_user', user_id=user['id']) }}">
+                  <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                  <button type="submit" class="button danger">删除</button>
+                </form>
+              </td>
+            </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    {% else %}
+      <p class="muted">当前没有普通用户。</p>
+    {% endif %}
+  </section>
+{% endblock %}

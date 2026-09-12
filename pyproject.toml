@@ -1,0 +1,51 @@
+[build-system]
+requires = ["setuptools>=61"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "speak-chat"
+description = "基于 Flask + Socket.IO + SQLite 的轻量级实时聊天室"
+readme = "README.md"
+requires-python = ">=3.8"
+license = { text = "MIT" }
+keywords = ["flask", "socketio", "chat", "websocket", "sqlite"]
+classifiers = [
+    "Development Status :: 5 - Production/Stable",
+    "Environment :: Web Environment",
+    "Framework :: Flask",
+    "Intended Audience :: Developers",
+    "License :: OSI Approved :: MIT License",
+    "Operating System :: OS Independent",
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3.8",
+    "Programming Language :: Python :: 3.9",
+    "Programming Language :: Python :: 3.10",
+    "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.12",
+    "Programming Language :: Python :: 3.13",
+    "Topic :: Communications :: Chat",
+    "Topic :: Internet :: WWW/HTTP :: Dynamic Content",
+]
+# 版本号与依赖都从现有文件读取，避免多处重复维护。
+dynamic = ["version", "dependencies"]
+
+[project.optional-dependencies]
+gevent = ["gevent>=21.0", "gevent-websocket>=0.10"]
+eventlet = ["eventlet>=0.31"]
+
+[project.urls]
+Homepage = "https://github.com/ZZx-zzx2014/speak"
+Source = "https://github.com/ZZx-zzx2014/speak"
+Issues = "https://github.com/ZZx-zzx2014/speak/issues"
+Changelog = "https://github.com/ZZx-zzx2014/speak/blob/main/CHANGELOG.md"
+
+[tool.setuptools]
+packages = ["speak"]
+include-package-data = true
+
+[tool.setuptools.dynamic]
+version = { attr = "speak.__version__" }
+dependencies = { file = ["requirements.txt"] }
+
+[tool.setuptools.package-data]
+speak = ["schema.sql", "templates/*.html", "static/*.css", "static/*.js"]

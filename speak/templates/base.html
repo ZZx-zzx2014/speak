@@ -1,0 +1,40 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>{% block title %}Speak 聊天室{% endblock %}</title>
+  <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+  {% block head %}{% endblock %}
+</head>
+<body>
+  <header class="topbar">
+    <a class="brand" href="{{ url_for('chat.index') }}">Speak 聊天室</a>
+    <nav class="nav">
+      {% if session.get('username') %}
+        <span class="nav-user">
+          {{ session['username'] }}{% if session.get('is_admin') %}<span class="badge">管理员</span>{% endif %}
+        </span>
+        <a href="{{ url_for('chat.chat') }}">聊天</a>
+        {% if session.get('is_admin') %}
+          <a href="{{ url_for('admin.manage') }}">用户管理</a>
+        {% endif %}
+        <form class="inline-form" method="post" action="{{ url_for('auth.logout') }}">
+          <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+          <button type="submit" class="link-button">退出登录</button>
+        </form>
+      {% else %}
+        <a href="{{ url_for('auth.login') }}">登录</a>
+        <a href="{{ url_for('auth.register') }}">注册</a>
+      {% endif %}
+    </nav>
+  </header>
+
+  <main class="page">
+    {% include '_flash.html' %}
+    {% block content %}{% endblock %}
+  </main>
+
+  {% block scripts %}{% endblock %}
+</body>
+</html>

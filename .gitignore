@@ -1,0 +1,32 @@
+# Secrets and local configuration
+.env
+*.env.local
+.secret_key
+instance/
+
+# Runtime database (the original project committed this file; password hashes
+# and chat data do not belong in version control)
+database.db
+database.db-wal
+database.db-shm
+*.sqlite
+*.sqlite3
+
+# Python
+__pycache__/
+*.py[cod]
+*.egg-info/
+.venv/
+venv/
+myenv/
+build/
+dist/
+
+# Tooling
+.pytest_cache/
+.coverage
+htmlcov/
+.idea/
+.vscode/
+.DS_Store
+Thumbs.db

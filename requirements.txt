@@ -1,4 +1,30 @@
-Flask
-Werkzeug
-Flask-SocketIO
-eventlet
+# Speak chat room - runtime dependencies.
+#
+# Version baseline: newest PyPI releases as of 2026-09-12
+#   Flask 3.1.3 | Werkzeug 3.1.8 | Flask-SocketIO 5.6.1
+#   python-socketio 5.16.4 | python-engineio 4.14.0
+#
+# Flask 3.1 / Werkzeug 3.1 require Python >= 3.9, so PEP 508 environment
+# markers select the last 3.0.x line that still supports Python 3.8.
+#
+# Keep this file ASCII-only: older pip versions (for example the pip 20.2.1
+# bundled with a fresh Python 3.8 virtualenv) decode it using the system locale
+# encoding - GBK on Chinese Windows - and fail on non-ASCII comments.
+# See README.md, section "Version and dependency policy".
+
+Flask>=3.0,<3.1; python_version < "3.9"
+Flask>=3.1.3,<4.0; python_version >= "3.9"
+
+Werkzeug>=3.0,<3.1; python_version < "3.9"
+Werkzeug>=3.1.8,<4.0; python_version >= "3.9"
+
+Flask-SocketIO>=5.6.1,<6.0
+python-socketio>=5.16.4,<6.0
+python-engineio>=4.14.0,<5.0
+
+# Optional: install ONE of these to enable the WebSocket transport, then start
+# with SPEAK_SOCKETIO_ASYNC_MODE=gevent (or eventlet). Without them the app runs
+# on the threading async mode over HTTP long polling.
+# gevent>=21.0
+# gevent-websocket>=0.10
+# eventlet>=0.31

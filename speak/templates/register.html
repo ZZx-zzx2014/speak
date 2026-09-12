@@ -1,0 +1,27 @@
+{% extends 'base.html' %}
+{% block title %}注册 · Speak 聊天室{% endblock %}
+{% block content %}
+  <section class="card">
+    <h1>注册</h1>
+    <form method="post" action="{{ url_for('auth.register') }}" class="stack">
+      <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+      <label for="username">用户名</label>
+      <input type="text" id="username" name="username" required autofocus
+             autocomplete="username" minlength="3" maxlength="20"
+             value="{{ username or '' }}">
+      <p class="hint">3-20 个字符，可使用中文、字母、数字和下划线。</p>
+
+      <label for="password">密码</label>
+      <input type="password" id="password" name="password" required
+             autocomplete="new-password" minlength="8" maxlength="128">
+      <p class="hint">至少 8 个字符。</p>
+
+      <label for="password2">确认密码</label>
+      <input type="password" id="password2" name="password2" required
+             autocomplete="new-password" minlength="8" maxlength="128">
+
+      <button type="submit" class="button primary">注册</button>
+    </form>
+    <p class="muted">已有账号？<a href="{{ url_for('auth.login') }}">前往登录</a></p>
+  </section>
+{% endblock %}

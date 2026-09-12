@@ -1,0 +1,20 @@
+{% extends 'base.html' %}
+{% block title %}登录 · Speak 聊天室{% endblock %}
+{% block content %}
+  <section class="card">
+    <h1>登录</h1>
+    <form method="post" action="{{ url_for('auth.login', next=request.args.get('next')) }}" class="stack">
+      <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+      <label for="username">用户名</label>
+      <input type="text" id="username" name="username" required autofocus
+             autocomplete="username" maxlength="20" value="{{ username or '' }}">
+
+      <label for="password">密码</label>
+      <input type="password" id="password" name="password" required
+             autocomplete="current-password">
+
+      <button type="submit" class="button primary">登录</button>
+    </form>
+    <p class="muted">还没有账号？<a href="{{ url_for('auth.register') }}">立即注册</a></p>
+  </section>
+{% endblock %}

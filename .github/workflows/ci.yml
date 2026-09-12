@@ -1,0 +1,61 @@
+name: tests
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  test:
+    name: Python ${{ matrix.python-version }}
+    runs-on: ubuntu-22.04
+    strategy:
+      fail-fast: false
+      matrix:
+        # 3.8 用于验证 requirements.txt 中的环境标记分支，
+        # 3.14 为当前最新稳定版。
+        python-version: ['3.8', '3.9', '3.11', '3.13', '3.14']
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: ${{ matrix.python-version }}
+
+      - name: 安装依赖
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r requirements.txt
+
+      - name: 显示解析到的版本
+        run: |
+          python -c "
+          import sys
+          from importlib.metadata import version
+          print(sys.version)
+          for package in ('Flask', 'Werkzeug', 'Flask-SocketIO', 'python-socketio', 'python-engineio'):
+              print(package, version(package))
+          "
+
+      - name: 运行测试
+        run: python -m unittest discover -s tests -t . -v
+
+  package:
+    name: 构建分发包
+    runs-on: ubuntu-22.04
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: 构建 sdist 与 wheel
+        run: |
+          python -m pip install --upgrade pip build
+          python -m build
+      - name: 校验元数据
+        run: python -m pip install --upgrade twine && twine check dist/*

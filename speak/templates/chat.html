@@ -1,0 +1,34 @@
+{% extends 'base.html' %}
+{% block title %}聊天室 · Speak 聊天室{% endblock %}
+{% block content %}
+  <section class="chat">
+    <div class="chat-meta">
+      <span id="connection-status" class="status status-connecting" role="status">连接中…</span>
+      <span id="presence" class="presence">在线 0 人</span>
+      <span class="muted">房间：{{ room }}</span>
+    </div>
+
+    <div id="chat-log" class="chat-log" role="log" aria-live="polite" aria-label="聊天记录">
+      <ul id="messages"></ul>
+    </div>
+
+    <form id="chat-form" class="chat-form" autocomplete="off">
+      <input id="chat-input" type="text" name="message" required
+             placeholder="输入消息…" maxlength="{{ max_message_length }}"
+             aria-label="消息内容">
+      <button type="submit" class="button primary">发送</button>
+    </form>
+  </section>
+
+  {# Configuration is handed to the script through data attributes so that the
+     Content-Security-Policy can forbid inline scripts entirely. #}
+  <div id="chat-config" hidden
+       data-socketio-path="{{ socketio_path }}"
+       data-socketio-srcs="{{ socketio_client_urls()|join(' ') }}"
+       data-max-length="{{ max_message_length }}"
+       data-room="{{ room }}"></div>
+{% endblock %}
+
+{% block scripts %}
+  <script src="{{ url_for('static', filename='chat.js') }}" defer></script>
+{% endblock %}

@@ -1,0 +1,19 @@
+{% extends 'base.html' %}
+{% block title %}首页 · Speak 聊天室{% endblock %}
+{% block content %}
+  <section class="card centered">
+    <h1>欢迎来到 Speak 聊天室</h1>
+    <p class="muted">登录后即可加入公共聊天室，与其他用户实时交流。</p>
+    <div class="actions">
+      {% if session.get('username') %}
+        <a class="button primary" href="{{ url_for('chat.chat') }}">进入聊天室</a>
+        {% if session.get('is_admin') %}
+          <a class="button" href="{{ url_for('admin.manage') }}">用户管理</a>
+        {% endif %}
+      {% else %}
+        <a class="button primary" href="{{ url_for('auth.register') }}">注册</a>
+        <a class="button" href="{{ url_for('auth.login') }}">登录</a>
+      {% endif %}
+    </div>
+  </section>
+{% endblock %}

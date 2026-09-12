@@ -1,0 +1,24 @@
+# 统一换行符，避免 Windows / Linux 协作时出现整文件差异
+* text=auto eol=lf
+*.bat text eol=crlf
+*.cmd text eol=crlf
+*.ps1 text eol=crlf
+
+# 二进制文件不做换行转换与 diff
+*.png binary
+*.jpg binary
+*.jpeg binary
+*.gif binary
+*.ico binary
+*.webp binary
+*.woff binary
+*.woff2 binary
+*.db binary
+*.sqlite binary
+*.sqlite3 binary
+*.zip binary
+
+# 语言统计
+*.md linguist-documentation
+CHANGELOG.md linguist-documentation
+LICENSE linguist-documentation

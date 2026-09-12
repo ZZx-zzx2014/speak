@@ -1,138 +1,92 @@
-from flask import Flask, render_template, request, redirect, url_for, flash, session
-import sqlite3
-from werkzeug.security import generate_password_hash, check_password_hash
-from flask_socketio import SocketIO, join_room, leave_room, send
+#!/usr/bin/env python3
+"""Development entry point.
 
-app = Flask(__name__)
-app.secret_key = 'your_secret_key'
-socketio = SocketIO(app)
+Starts the same way as before::
 
-def init_db():
+    python app.py
+
+For a production deployment use a real WSGI server instead — see ``README.md``.
+"""
+
+import logging
+import os
+import sys
+
+
+def apply_async_mode_patch():
+    """Monkey patch ``gevent``/``eventlet`` before anything else is imported.
+
+    This has to happen before ``speak`` (and therefore Flask, engineio and the
+    standard library socket/thread modules) is imported, otherwise the async
+    backend cannot work correctly.  Falls back to ``threading`` when the
+    requested backend is not installed.
+    """
+    mode = os.environ.get('SPEAK_SOCKETIO_ASYNC_MODE', 'threading').strip().lower()
+    if mode not in ('gevent', 'eventlet'):
+        return mode
+
     try:
-        conn = sqlite3.connect('database.db')
-        c = conn.cursor()
-        c.execute('''
-            CREATE TABLE IF NOT EXISTS users (
-                id INTEGER PRIMARY KEY AUTOINCREMENT,
-                username TEXT UNIQUE NOT NULL,
-                password TEXT NOT NULL,
-                is_admin INTEGER NOT NULL DEFAULT 0
-            )
-        ''')
-        conn.commit()
-        
-        # 创建默认管理员账户
-        c.execute("SELECT * FROM users WHERE username='root'")
-        admin_user = c.fetchone()
-        if not admin_user:
-            c.execute("INSERT INTO users (username, password, is_admin) VALUES (?, ?, ?)",
-                      ('root', generate_password_hash('root', method='pbkdf2:sha256'), 1))
-            conn.commit()
-
-        conn.close()
-        print("数据库初始化成功")
-    except Exception as e:
-        print("初始化数据库时出错:", e)
-
-init_db()
-
-@app.route('/register', methods=['GET', 'POST'])
-def register():
-    if request.method == 'POST':
-        username = request.form['username']
-        password = request.form['password']
-        hashed_password = generate_password_hash(password, method='pbkdf2:sha256')
-        
-        try:
-            conn = sqlite3.connect('database.db')
-            c = conn.cursor()
-            c.execute('INSERT INTO users (username, password, is_admin) VALUES (?, ?, 0)', (username, hashed_password))
-            conn.commit()
-            conn.close()
-            flash('注册成功！现在可以登录。', 'success')
-            return redirect(url_for('login'))
-        except sqlite3.IntegrityError:
-            flash('用户名已存在，请选择其他用户名。', 'danger')
-    
-    return render_template('register.html')
-
-@app.route('/login', methods=['GET', 'POST'])
-def login():
-    if request.method == 'POST':
-        username = request.form['username']
-        password = request.form['password']
-        
-        conn = sqlite3.connect('database.db')
-        c = conn.cursor()
-        c.execute('SELECT id, username, password, is_admin FROM users WHERE username = ?', (username,))
-        user = c.fetchone()
-        conn.close()
-        
-        if user and check_password_hash(user[2], password):
-            session['username'] = username
-            session['is_admin'] = user[3]
-            flash('登录成功！', 'success')
-            return redirect(url_for('chat'))
+        if mode == 'gevent':
+            from gevent import monkey
         else:
-            flash('用户名或密码无效，请重试。', 'danger')
-    
-    return render_template('login.html')
+            from eventlet import monkey
+        monkey.patch_all()
+    except ImportError:
+        print('提示：未安装 %s，回退到 threading 模式（仅支持长轮询）。' % mode,
+              file=sys.stderr)
+        os.environ['SPEAK_SOCKETIO_ASYNC_MODE'] = 'threading'
+        return 'threading'
+    return mode
 
-@app.route('/chat')
-def chat():
-    if 'username' in session:
-        username = session['username']
-        return render_template('chat.html', username=username)
-    else:
-        flash('请先登录。', 'danger')
-        return redirect(url_for('login'))
 
-@app.route('/manage')
-def manage():
-    if 'username' in session and session.get('is_admin'):
-        conn = sqlite3.connect('database.db')
-        c = conn.cursor()
-        c.execute('SELECT id, username FROM users WHERE is_admin = 0')
-        users = c.fetchall()
-        conn.close()
-        return render_template('manage.html', users=users)
-    else:
-        flash('您需要管理员权限。', 'danger')
-        return redirect(url_for('login'))
+def run_server(socketio, app):
+    """Start the built-in development server.
 
-@app.route('/delete_user/<int:user_id>', methods=['POST'])
-def delete_user(user_id):
-    if 'username' in session and session.get('is_admin'):
-        conn = sqlite3.connect('database.db')
-        c = conn.cursor()
-        c.execute('DELETE FROM users WHERE id = ?', (user_id,))
-        conn.commit()
-        conn.close()
-        flash('用户删除成功。', 'success')
-        return redirect(url_for('manage'))
-    else:
-        flash('您需要管理员权限。', 'danger')
-        return redirect(url_for('login'))
+    Flask-SocketIO >= 5.3 refuses to run the Werkzeug development server unless
+    ``allow_unsafe_werkzeug=True`` is passed, while older releases raise
+    ``TypeError`` for that keyword.  Instead of guessing from a version string,
+    the plain call is attempted first and the opt-in is only supplied when the
+    library explicitly asks for it — this works on every release in between.
+    """
+    host = app.config['HOST']
+    port = app.config['PORT']
+    options = {'debug': app.config['DEBUG'], 'use_reloader': app.config['DEBUG']}
 
-@socketio.on('message')
-def handle_message(data):
-    send({'msg': data['msg'], 'username': session['username']}, room='main_room')
+    try:
+        socketio.run(app, host=host, port=port, **options)
+    except RuntimeError as exc:
+        if 'allow_unsafe_werkzeug' not in str(exc):
+            raise
+        app.logger.warning(
+            '当前 Flask-SocketIO 要求显式确认才允许使用内置开发服务器。'
+            '生产环境请改用 gunicorn 等 WSGI 服务器（见 README）。'
+        )
+        socketio.run(app, host=host, port=port,
+                     allow_unsafe_werkzeug=True, **options)
 
-@socketio.on('join')
-def handle_join():
-    join_room('main_room')
-    send({'msg': session['username'] + ' 加入了房间'}, room='main_room')
 
-@socketio.on('leave')
-def handle_leave():
-    leave_room('main_room')
-    send({'msg': session['username'] + ' 离开了房间'}, room='main_room')
+def main():
+    apply_async_mode_patch()
 
-@app.route('/')
-def index():
-    return render_template('index.html')
+    from speak import __version__, create_app, socketio
+
+    logging.basicConfig(
+        level=logging.INFO,
+        format='%(asctime)s %(levelname)-7s %(name)s: %(message)s',
+    )
+
+    app = create_app()
+    host = app.config['HOST']
+    port = app.config['PORT']
+
+    app.logger.info('Speak %s 已启动: http://%s:%s (async_mode=%s)',
+                    __version__, host, port, app.config['SOCKETIO_ASYNC_MODE'])
+    if host not in ('127.0.0.1', 'localhost'):
+        app.logger.warning('服务绑定在 %s，同一网络中的其他主机可访问；'
+                           '请仅在受信任的环境中使用内置开发服务器。', host)
+
+    run_server(socketio, app)
+
 
 if __name__ == '__main__':
-    print("启动 Flask 服务器在端口 5002...")
-    print("服务器IP地址是 http://127.0.0.1:5002")
-    socketio.run(app, debug=True, host='0.0.0.0', port=5002)
+    main()
