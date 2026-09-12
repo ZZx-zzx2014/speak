@@ -134,4 +134,5 @@ def index():
 
 if __name__ == '__main__':
     print("启动 Flask 服务器在端口 5002...")
-    socketio.run(app, debug=True, host='172.16,250.30', port=5002)
+    print("服务器IP地址是 http://127.0.0.1:5002")
+    socketio.run(app, debug=True, host='0.0.0.0', port=5002)
