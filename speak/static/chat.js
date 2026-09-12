@@ -17,7 +17,12 @@
     }
 
     var CDN_URLS = (configEl.dataset.socketioSrcs || '').split(/\s+/).filter(Boolean);
-    var SOCKET_PATH = configEl.dataset.socketioPath || 'socket.io';
+    var SOCKET_PATH = configEl.dataset.socketioPath || '/socket.io';
+    // socket.io-client does not add a leading slash itself; without it the URL
+    // becomes "http://host:portsocket.io/..." and every poll fails instantly.
+    if (SOCKET_PATH.charAt(0) !== '/') {
+        SOCKET_PATH = '/' + SOCKET_PATH;
+    }
     var MAX_LENGTH = parseInt(configEl.dataset.maxLength, 10) || 500;
 
     var statusEl = document.getElementById('connection-status');

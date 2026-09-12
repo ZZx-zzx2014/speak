@@ -55,6 +55,29 @@ class PublicPagesTest(AppTestCase):
         self.assertIn('/login', response.headers['Location'])
 
 
+class ChatPageTest(AppTestCase):
+    """The chat page must hand the browser a *usable* Socket.IO configuration."""
+
+    def setUp(self):
+        super().setUp()
+        self.register()
+        self.login()
+
+    def test_socketio_path_has_a_leading_slash(self):
+        """socket.io-client does not normalise ``path``.
+
+        Without the leading slash the client builds
+        ``http://host:portsocket.io/...``, every poll fails immediately and the
+        page shows "xhr poll error" without ever contacting the server.
+        """
+        body = self.client.get('/chat').get_data(as_text=True)
+        self.assertIn('data-socketio-path="/socket.io"', body)
+
+    def test_chat_page_references_the_bundled_client(self):
+        body = self.client.get('/chat').get_data(as_text=True)
+        self.assertIn('/static/vendor/socket.io.min.js', body)
+
+
 class RegistrationTest(AppTestCase):
     def test_register_then_login_then_chat(self):
         response = self.register()
