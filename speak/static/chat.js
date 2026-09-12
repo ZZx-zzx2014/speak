@@ -126,8 +126,9 @@
             setStatus('连接已断开，正在重连…', 'status-offline');
         });
 
-        socket.on('connect_error', function () {
-            setStatus('连接失败，正在重试…', 'status-offline');
+        socket.on('connect_error', function (error) {
+            var reason = (error && error.message) ? error.message : '未知原因';
+            setStatus('连接失败：' + reason + '（正在重试…）', 'status-offline');
         });
 
         socket.on('history', function (data) {

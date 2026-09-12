@@ -154,6 +154,22 @@ speak/
 | `SPEAK_ADMIN_USERNAME` | `root` | 初始管理员用户名 |
 | `SPEAK_ADMIN_PASSWORD` | 见上文 | 初始管理员密码 |
 
+**人机验证（Cloudflare Turnstile，可选）**
+
+| 变量 | 默认值 | 说明 |
+| --- | --- | --- |
+| `SPEAK_TURNSTILE_SITE_KEY` | 空 | 站点公钥；留空即关闭人机验证 |
+| `SPEAK_TURNSTILE_SECRET_KEY` | 空 | 服务端密钥；两个 key 都填才生效 |
+| `SPEAK_TURNSTILE_TIMEOUT` | `5` | 校验请求超时（秒） |
+
+> **启用步骤：** 到 <https://dash.cloudflare.com/> → Turnstile → Add site，
+> 拿到 Site Key 与 Secret Key 后设为上面两个环境变量并重启服务。
+> 未配置时登录/注册表单不会出现验证组件，功能完全不受影响。
+>
+> 校验失败一律**拒绝**（fail-closed）：令牌缺失、Cloudflare 不可达、返回内容无法解析
+> 都视为不通过。这样可防止通过屏蔽校验接口来绕过验证，代价是 Cloudflare 故障期间无法登录；
+> 每次拒绝的原因都会写入日志。
+
 **响应加固**
 
 | 变量 | 默认值 | 说明 |
@@ -209,6 +225,7 @@ speak/
 | 会话固定 | 登录成功后重建会话 |
 | XSS | 前端全部使用 `textContent`；服务端过滤控制字符；CSP 默认禁止内联脚本 |
 | 暴力破解 | 登录/注册按「来源 IP + 用户名」滑动窗口限流 |
+| 自动化注册 / 撞库 | 可选接入 Cloudflare Turnstile 人机验证，校验失败一律拒绝 |
 | 消息洪泛 | 按用户名限制发送频率 |
 | 越权删除 | 删除用户前校验目标是否存在、是否为管理员、是否为当前账户 |
 | SQL 注入 | 全部使用参数化查询 |
@@ -227,8 +244,8 @@ speak/
 python -m unittest discover -s tests -t . -v
 ```
 
-共 **61 个测试**，覆盖 HTTP 层（认证、鉴权、CSRF、安全响应头、旧库迁移）、
-Socket.IO 层（连接鉴权、广播、历史回放、限流）与纯函数单元测试。
+共 **75 个测试**，覆盖 HTTP 层（认证、鉴权、CSRF、安全响应头、旧库迁移）、
+Socket.IO 层（连接鉴权、广播、历史回放、限流）、Turnstile 人机验证与纯函数单元测试。
 
 ---
 

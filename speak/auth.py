@@ -11,6 +11,7 @@ from werkzeug.security import check_password_hash, generate_password_hash
 
 from .db import PASSWORD_HASH_METHOD, get_db
 from .security import client_key, login_limiter
+from .turnstile import RESPONSE_FIELD, verify as verify_turnstile
 from .validators import ValidationError, safe_redirect_target, validate_password, validate_username
 
 log = logging.getLogger(__name__)
@@ -33,6 +34,19 @@ def _timing_equaliser_hash():
     return _dummy_hash
 
 
+def _human_verification_passed():
+    """Run the Cloudflare Turnstile challenge for the current request.
+
+    Always returns ``True`` when Turnstile is not configured, so the forms keep
+    working out of the box.
+    """
+    return verify_turnstile(
+        request.form.get(RESPONSE_FIELD, ''),
+        request.remote_addr,
+        current_app.config,
+    )
+
+
 @bp.route('/register', methods=['GET', 'POST'])
 def register():
     if session.get('username'):
@@ -47,6 +61,10 @@ def register():
     if not allowed:
         flash('注册尝试过于频繁，请在 %.0f 秒后重试。' % (retry_after + 0.5), 'danger')
         return render_template('register.html', username=form_username), 429
+
+    if not _human_verification_passed():
+        flash('人机验证未通过，请重试。', 'danger')
+        return render_template('register.html', username=form_username), 400
 
     try:
         username = validate_username(form_username, current_app.config)
@@ -94,6 +112,10 @@ def login():
     if not allowed:
         flash('登录尝试过于频繁，请在 %.0f 秒后重试。' % (retry_after + 0.5), 'danger')
         return render_template('login.html', username=username), 429
+
+    if not _human_verification_passed():
+        flash('人机验证未通过，请重试。', 'danger')
+        return render_template('login.html', username=username), 400
 
     row = get_db().execute(
         'SELECT id, username, password, is_admin FROM users WHERE username = ?',

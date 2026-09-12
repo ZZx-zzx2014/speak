@@ -109,7 +109,11 @@ def register(server):
         """Reject anonymous connections: the chat is for logged-in users only."""
         username = session.get('username')
         if not username:
-            log.info('拒绝未登录的 Socket.IO 连接 (sid=%s)', request.sid)
+            # Log the session keys (not values) so a rejected connection is
+            # diagnosable: an empty list usually means the cookie was missing,
+            # expired, or signed with a different SECRET_KEY.
+            log.warning('拒绝未登录的 Socket.IO 连接 (sid=%s, addr=%s, 会话字段=%s)',
+                        request.sid, request.remote_addr, sorted(session.keys()))
             return False
         return True
 

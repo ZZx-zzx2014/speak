@@ -20,8 +20,19 @@
       <input type="password" id="password2" name="password2" required
              autocomplete="new-password" minlength="8" maxlength="128">
 
+      {% if turnstile_site_key %}
+        <div class="cf-turnstile" data-sitekey="{{ turnstile_site_key }}"
+             data-language="zh-cn" data-theme="light"></div>
+      {% endif %}
+
       <button type="submit" class="button primary">注册</button>
     </form>
     <p class="muted">已有账号？<a href="{{ url_for('auth.login') }}">前往登录</a></p>
   </section>
+{% endblock %}
+
+{% block scripts %}
+  {% if turnstile_site_key %}
+    <script src="https://challenges.cloudflare.com/turnstile/v0/api.js" async defer></script>
+  {% endif %}
 {% endblock %}

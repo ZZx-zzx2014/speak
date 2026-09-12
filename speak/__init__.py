@@ -126,7 +126,7 @@ def create_app(config_object=Config, **overrides):
         engineio_logger=app.config['SOCKETIO_ENGINEIO_LOGGER'],
     )
 
-    from . import admin, auth, chat, db, security
+    from . import admin, auth, chat, db, security, turnstile
 
     db.init_app(app)
     security.init_app(app)
@@ -137,6 +137,11 @@ def create_app(config_object=Config, **overrides):
     app.register_blueprint(admin.bp)
 
     app.jinja_env.globals['socketio_client_urls'] = lambda: cdn_urls(app.config)
+    # Empty string when Turnstile is not configured, so templates can simply
+    # test ``{% if turnstile_site_key %}``.
+    app.jinja_env.globals['turnstile_site_key'] = (
+        app.config['TURNSTILE_SITE_KEY'] if turnstile.is_enabled(app.config) else ''
+    )
 
     _register_error_handlers(app)
 

@@ -113,13 +113,23 @@ class Config:
     LOGIN_MAX_ATTEMPTS = env_int('SPEAK_LOGIN_MAX_ATTEMPTS', 5)
     LOGIN_WINDOW_SECONDS = env_int('SPEAK_LOGIN_WINDOW_SECONDS', 300)
 
+    # --- Cloudflare Turnstile (人机验证) --------------------------------------
+    #: Bot protection for the login and registration forms.  Disabled until both
+    #: keys are set, so local development needs no Cloudflare account.
+    TURNSTILE_SITE_KEY = os.environ.get('SPEAK_TURNSTILE_SITE_KEY') or ''
+    TURNSTILE_SECRET_KEY = os.environ.get('SPEAK_TURNSTILE_SECRET_KEY') or ''
+    TURNSTILE_TIMEOUT_SECONDS = env_int('SPEAK_TURNSTILE_TIMEOUT', 5)
+
     # --- Response hardening --------------------------------------------------
     SECURITY_HEADERS = env_bool('SPEAK_SECURITY_HEADERS', True)
     #: Blocks inline scripts (the main XSS vector) while still allowing the
     #: Socket.IO client to be loaded from any HTTPS mirror.
+    #: ``frame-src`` must allow Cloudflare or the Turnstile widget is blocked.
     CONTENT_SECURITY_POLICY = os.environ.get(
         'SPEAK_CONTENT_SECURITY_POLICY',
         "default-src 'self'; script-src 'self' https:; style-src 'self' 'unsafe-inline'; "
-        "img-src 'self' data:; connect-src 'self' ws: wss:; font-src 'self'; "
+        "img-src 'self' data:; font-src 'self'; "
+        "connect-src 'self' ws: wss: https://challenges.cloudflare.com; "
+        "frame-src https://challenges.cloudflare.com; "
         "frame-ancestors 'none'; base-uri 'self'; form-action 'self'",
     )
