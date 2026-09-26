@@ -1,7 +1,7 @@
 {% extends 'base.html' %}
 {% block title %}注册 · Speak 聊天室{% endblock %}
 {% block content %}
-  <section class="card">
+  <section class="card card--form">
     <h1>注册</h1>
     <form method="post" action="{{ url_for('auth.register') }}" class="stack">
       <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
@@ -34,5 +34,6 @@
 {% block scripts %}
   {% if turnstile_site_key %}
     <script src="https://challenges.cloudflare.com/turnstile/v0/api.js" async defer></script>
+    <script src="{{ url_for('static', filename='turnstile-status.js') }}" defer></script>
   {% endif %}
 {% endblock %}

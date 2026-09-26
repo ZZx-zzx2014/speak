@@ -313,6 +313,17 @@ h3 { font-size: 1rem;    margin: 1.1rem 0 0.5rem; }
   margin-top: 1.25rem;
 }
 
+/* 纯表单页（登录/注册）：收窄并居中，避免卡片横跨整页留出大片空白 */
+.card--form {
+  max-width: 470px;
+  margin-right: auto;
+  margin-left: auto;
+}
+
+.card--form .stack {
+  max-width: none;
+}
+
 /* 卡片标题下加一条渐变短线，比纯色边框精致 */
 .card > h2:first-child {
   position: relative;
@@ -366,6 +377,18 @@ h3 { font-size: 1rem;    margin: 1.1rem 0 0.5rem; }
   color: #ffd9a0;
   font-size: 0.9rem;
   white-space: pre-wrap;
+}
+
+/* 人机验证组件的失败提示，显隐由 static/turnstile-status.js 控制 */
+.turnstile-note {
+  margin: 0.5rem 0 0;
+  padding: 0.55rem 0.8rem;
+  border: 1px solid rgba(255, 180, 84, 0.35);
+  border-left: 3px solid var(--warning);
+  border-radius: var(--radius-sm);
+  background: var(--warning-soft);
+  color: #ffd9a0;
+  font-size: 0.82rem;
 }
 
 /* ================================================================== 表单 */
