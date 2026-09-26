@@ -86,6 +86,93 @@
   </section>
 
   <section class="card">
+    <h2>邮件配置</h2>
+    <p class="muted">
+      当前状态：
+      <strong class="{{ 'status-online' if mail_configured else 'status-connecting' }}">
+        {{ '已配置' if mail_configured else '未配置' }}
+      </strong>
+      <span class="hint">{{ mail_status }}</span>
+    </p>
+
+    <form method="post" action="{{ url_for('admin.save_mail_settings') }}" class="stack">
+      <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+
+      <label for="mail_backend">发送方式</label>
+      <select id="mail_backend" name="mail_backend">
+        <option value="console" {% if values.mail_backend != 'smtp' %}selected{% endif %}>
+          控制台模式（只写日志，不真正发信）
+        </option>
+        <option value="smtp" {% if values.mail_backend == 'smtp' %}selected{% endif %}>
+          SMTP（真正发送）
+        </option>
+      </select>
+      <p class="hint">建议先用控制台模式把「注册 → 找回密码」整条流程跑通，再切到 SMTP。</p>
+
+      <label for="mail_host">SMTP 服务器</label>
+      <input type="text" id="mail_host" name="mail_host" value="{{ values.mail_host }}"
+             placeholder="smtp.example.com" autocomplete="off" spellcheck="false">
+
+      <label for="mail_port">端口</label>
+      <input type="text" id="mail_port" name="mail_port" value="{{ values.mail_port }}"
+             placeholder="587">
+
+      <label for="mail_security">加密方式</label>
+      <select id="mail_security" name="mail_security">
+        <option value="starttls" {% if values.mail_security == 'starttls' %}selected{% endif %}>
+          STARTTLS（通常用 587 端口）
+        </option>
+        <option value="ssl" {% if values.mail_security == 'ssl' %}selected{% endif %}>
+          SSL / TLS（通常用 465 端口）
+        </option>
+        <option value="none" {% if values.mail_security == 'none' %}selected{% endif %}>
+          不加密（不推荐）
+        </option>
+      </select>
+
+      <label for="mail_username">SMTP 用户名</label>
+      <input type="text" id="mail_username" name="mail_username"
+             value="{{ values.mail_username }}" autocomplete="off" spellcheck="false">
+
+      <label for="mail_password">SMTP 密码 / 授权码</label>
+      <input type="password" id="mail_password" name="mail_password"
+             value="{{ values.mail_password }}" autocomplete="new-password">
+      <p class="hint">多数邮箱（QQ、163、Gmail）需要填「授权码」，不是登录密码。</p>
+
+      <label for="mail_sender">发件人</label>
+      <input type="text" id="mail_sender" name="mail_sender" value="{{ values.mail_sender }}"
+             placeholder="Speak 聊天室 &lt;no-reply@example.com&gt;" autocomplete="off">
+      <p class="hint">留空则使用上面的 SMTP 用户名。</p>
+
+      <label for="reset_token_minutes">重置链接有效期（分钟）</label>
+      <input type="text" id="reset_token_minutes" name="reset_token_minutes"
+             value="{{ values.reset_token_minutes }}">
+      <p class="hint">可填 5-1440 分钟，建议 30 分钟。</p>
+
+      <label for="test_recipient">测试收件人</label>
+      <input type="email" id="test_recipient" name="test_recipient"
+             placeholder="you@example.com" autocomplete="off">
+
+      <div class="button-row">
+        <button type="submit" name="action" value="save" class="button primary">保存邮件配置</button>
+        <button type="submit" name="action" value="test" class="button">保存并发送测试邮件</button>
+      </div>
+    </form>
+
+    <details class="guide">
+      <summary>常见邮箱的 SMTP 参数</summary>
+      <ol class="guide-steps">
+        <li><strong>QQ 邮箱</strong>：<code>smtp.qq.com</code>，587，STARTTLS；密码填「授权码」</li>
+        <li><strong>163 邮箱</strong>：<code>smtp.163.com</code>，465，SSL；密码填「授权码」</li>
+        <li><strong>Gmail</strong>：<code>smtp.gmail.com</code>，587，STARTTLS；需「应用专用密码」</li>
+        <li><strong>Outlook</strong>：<code>smtp.office365.com</code>，587，STARTTLS</li>
+        <li><strong>本地调试</strong>：选「控制台模式」，邮件内容会打印在启动服务的窗口里，
+          重置链接可以直接复制到浏览器打开</li>
+      </ol>
+    </details>
+  </section>
+
+  <section class="card">
     <h2>修改管理密码</h2>
     <form method="post" action="{{ url_for('admin.change_password') }}" class="stack">
       <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">

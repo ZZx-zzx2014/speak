@@ -56,7 +56,8 @@ class SettingsHttpTest(unittest.TestCase):
         client = self.app.test_client()
         client.post('/register', data={
             'csrf_token': extract_csrf(client, ('/register',)),
-            'username': 'alice', 'password': 'password123', 'password2': 'password123',
+            'username': 'alice', 'email': 'alice@example.com',
+            'password': 'password123', 'password2': 'password123',
         })
         client.post('/login', data={
             'csrf_token': extract_csrf(client),

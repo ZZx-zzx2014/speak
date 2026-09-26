@@ -8,11 +8,12 @@ from flask import (
 )
 from werkzeug.security import check_password_hash, generate_password_hash
 
+from . import mail, tokens
 from .db import PASSWORD_HASH_METHOD, get_db
 from .security import admin_required
 from .settings import all_sources, all_values, save as save_settings
 from .turnstile import TEST_KEYS, verify_secret_key
-from .validators import ValidationError, validate_password
+from .validators import ValidationError, validate_email, validate_password
 
 log = logging.getLogger(__name__)
 
@@ -23,7 +24,7 @@ bp = Blueprint('admin', __name__)
 @admin_required
 def manage():
     users = get_db().execute(
-        'SELECT id, username, created_at FROM users '
+        'SELECT id, username, email, created_at FROM users '
         'WHERE is_admin = 0 ORDER BY id'
     ).fetchall()
     return render_template('manage.html', users=users)
@@ -58,6 +59,38 @@ def delete_user(user_id):
     return redirect(url_for('admin.manage'))
 
 
+@bp.route('/manage/users/<int:user_id>/send-reset', methods=['POST'])
+@admin_required
+def send_password_reset(user_id):
+    """管理员代某个用户触发一封密码重置邮件。
+
+    这是「用邮箱操作」在管理侧最实用的一项：用户忘了密码又收不到邮件时，
+    管理员可以直接帮他重新发一封，而**不需要知道他的密码**。
+    """
+    row = get_db().execute(
+        'SELECT id, username, email, password FROM users WHERE id = ?', (user_id,)
+    ).fetchone()
+
+    if row is None:
+        flash('该用户不存在或已被删除。', 'danger')
+        return redirect(url_for('admin.manage'))
+
+    if not row['email']:
+        flash('用户 %s 没有填写邮箱，无法发送重置邮件。' % row['username'], 'danger')
+        return redirect(url_for('admin.manage'))
+
+    token = tokens.generate(row['id'], row['password'])
+    reset_url = url_for('auth.reset_password', token=token, _external=True)
+    ok, message = mail.send_password_reset(
+        row['email'], row['username'], reset_url, tokens.ttl_minutes()
+    )
+
+    log.info('管理员 %s 为用户 %s 发送了密码重置邮件',
+             session.get('username'), row['username'])
+    flash(message, 'success' if ok else 'danger')
+    return redirect(url_for('admin.manage'))
+
+
 # --------------------------------------------------------------------------- #
 # Settings
 # --------------------------------------------------------------------------- #
@@ -70,6 +103,9 @@ def settings_page():
         values=all_values(),
         sources=all_sources(),
         test_keys=TEST_KEYS,
+        mail_status=mail.describe(),
+        mail_configured=mail.is_configured(),
+        mail_backend=mail.backend_name(),
     )
 
 
@@ -134,6 +170,71 @@ def save_turnstile_settings():
         flash('Cloudflare 配置已保存，人机验证已开启。', 'success')
     else:
         flash('Cloudflare 配置已清空，人机验证已关闭。', 'success')
+    return redirect(url_for('admin.settings_page'))
+
+
+@bp.route('/admin/settings/mail', methods=['POST'])
+@admin_required
+def save_mail_settings():
+    """保存邮件配置，或发送一封测试邮件。
+
+    ``action=test`` 时先保存再发测试信，这样测试用的就是刚填的参数。
+    """
+    action = request.form.get('action', 'save')
+
+    mapping = {
+        'mail_backend': (request.form.get('mail_backend') or 'console').strip().lower(),
+        'mail_host': (request.form.get('mail_host') or '').strip(),
+        'mail_port': (request.form.get('mail_port') or '587').strip(),
+        'mail_security': (request.form.get('mail_security') or 'starttls').strip().lower(),
+        'mail_username': (request.form.get('mail_username') or '').strip(),
+        'mail_password': request.form.get('mail_password') or '',
+        'mail_sender': (request.form.get('mail_sender') or '').strip(),
+        'reset_token_minutes': (request.form.get('reset_token_minutes') or '30').strip(),
+    }
+
+    # 枚举值兜底，避免把非法值写进设置
+    if mapping['mail_backend'] not in ('console', 'smtp'):
+        mapping['mail_backend'] = 'console'
+    if mapping['mail_security'] not in ('starttls', 'ssl', 'none'):
+        mapping['mail_security'] = 'starttls'
+
+    try:
+        port = int(mapping['mail_port'])
+        if not 1 <= port <= 65535:
+            raise ValueError
+    except (TypeError, ValueError):
+        flash('SMTP 端口必须是 1-65535 之间的整数。', 'danger')
+        return redirect(url_for('admin.settings_page'))
+
+    try:
+        minutes = int(mapping['reset_token_minutes'])
+        if not 5 <= minutes <= 1440:
+            raise ValueError
+    except (TypeError, ValueError):
+        flash('重置链接有效期请填 5-1440 分钟。', 'danger')
+        return redirect(url_for('admin.settings_page'))
+
+    save_settings(mapping)
+
+    if action == 'test':
+        recipient = (request.form.get('test_recipient') or '').strip()
+        if not recipient:
+            flash('请填写一个测试收件人邮箱。', 'danger')
+            return redirect(url_for('admin.settings_page'))
+        try:
+            recipient = validate_email(recipient, current_app.config, required=True)
+        except ValidationError as exc:
+            flash(str(exc), 'danger')
+            return redirect(url_for('admin.settings_page'))
+
+        ok, message = mail.send_test(recipient)
+        log.info('管理员 %s 触发了邮件测试', session.get('username'))
+        flash(message, 'success' if ok else 'danger')
+        return redirect(url_for('admin.settings_page'))
+
+    log.info('管理员 %s 更新了邮件配置', session.get('username'))
+    flash('邮件配置已保存。', 'success')
     return redirect(url_for('admin.settings_page'))
 
 

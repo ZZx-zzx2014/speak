@@ -1,5 +1,6 @@
 """Shared helpers for the test suite."""
 
+import itertools
 import os
 import re
 import tempfile
@@ -11,6 +12,10 @@ CSRF_RE = re.compile(r'name="csrf_token" value="([^"]+)"')
 #: Anonymous sessions only expose a token on /login; logged-in sessions get one
 #: from the logout form in the layout, so both are tried.
 CSRF_PAGES = ('/login', '/')
+
+#: ``register()`` 的默认邮箱哨兵：传它表示「自动生成一个不重复的邮箱」。
+_AUTO_EMAIL = object()
+_email_counter = itertools.count(1)
 
 
 def extract_csrf(client, pages=CSRF_PAGES):
@@ -59,10 +64,19 @@ class AppTestCase(unittest.TestCase):
         """CSRF token of the currently authenticated session."""
         return extract_csrf(self.client, (path,) if path else CSRF_PAGES)
 
-    def register(self, username='alice', password='password123', confirmation=None):
+    def register(self, username='alice', password='password123', confirmation=None,
+                 email=_AUTO_EMAIL):
+        """注册一个账号。
+
+        邮箱默认自动生成（每个账号不同），避免用例之间互相干扰；
+        需要验证邮箱行为时显式传入（例如 ``email=''`` 表示不填）。
+        """
+        if email is _AUTO_EMAIL:
+            email = 'user%d@example.com' % next(_email_counter)
         return self.client.post('/register', data={
             'csrf_token': self.csrf_token('/register'),
             'username': username,
+            'email': email,
             'password': password,
             'password2': password if confirmation is None else confirmation,
         })

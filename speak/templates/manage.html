@@ -9,6 +9,7 @@
           <tr>
             <th scope="col">ID</th>
             <th scope="col">用户名</th>
+            <th scope="col">邮箱</th>
             <th scope="col">注册时间 (UTC)</th>
             <th scope="col">操作</th>
           </tr>
@@ -18,8 +19,23 @@
             <tr>
               <td>{{ user['id'] }}</td>
               <td>{{ user['username'] }}</td>
-              <td class="muted">{{ user['created_at'] }}</td>
               <td>
+                {% if user['email'] %}
+                  <a href="mailto:{{ user['email'] }}">{{ user['email'] }}</a>
+                {% else %}
+                  <span class="muted">未填写</span>
+                {% endif %}
+              </td>
+              <td class="muted">{{ user['created_at'] }}</td>
+              <td class="row-actions">
+                <form method="post" class="inline-form"
+                      action="{{ url_for('admin.send_password_reset', user_id=user['id']) }}">
+                  <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                  <button type="submit" class="button" {% if not user['email'] %}disabled{% endif %}
+                          title="{% if user['email'] %}给该邮箱发送密码重置链接{% else %}该用户没有邮箱{% endif %}">
+                    发送重置链接
+                  </button>
+                </form>
                 <form method="post" class="inline-form"
                       action="{{ url_for('admin.delete_user', user_id=user['id']) }}">
                   <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">

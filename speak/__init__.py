@@ -152,6 +152,7 @@ def create_app(config_object=Config, **overrides):
                 'turnstile_site_key': (
                     settings.get('turnstile_site_key') if turnstile.is_enabled() else ''
                 ),
+                'email_required': bool(app.config['EMAIL_REQUIRED']),
                 'show_admin_setup': session.pop('show_admin_setup', False),
             }
         except Exception:  # pragma: no cover - never break rendering
@@ -160,6 +161,7 @@ def create_app(config_object=Config, **overrides):
                 'site_name': app.config['SITE_NAME'],
                 'site_announcement': app.config['SITE_ANNOUNCEMENT'],
                 'turnstile_site_key': '',
+                'email_required': bool(app.config['EMAIL_REQUIRED']),
                 'show_admin_setup': False,
             }
 

@@ -359,6 +359,13 @@ h3 { font-size: 1rem;    margin: 1.1rem 0 0.5rem; }
   line-height: 1.6;
 }
 
+/* 表单里的次要操作（如「忘记密码？」），靠右弱化显示 */
+.form-aside {
+  margin: 0.4rem 0 0;
+  text-align: right;
+  font-size: 0.84rem;
+}
+
 .actions {
   display: flex;
   gap: 0.7rem;
@@ -518,6 +525,27 @@ summary:focus-visible {
   border-color: var(--danger);
   background: rgba(255, 95, 95, 0.22);
   color: #ffb0b0;
+}
+
+/* 禁用态：比如「没有邮箱的用户不能发送重置链接」 */
+.button[disabled] {
+  opacity: 0.42;
+  cursor: not-allowed;
+  transform: none;
+  box-shadow: none;
+}
+
+/* 表格里的操作按钮排成一行 */
+.row-actions {
+  display: flex;
+  gap: 0.4rem;
+  flex-wrap: wrap;
+}
+
+.row-actions .button {
+  margin-top: 0;
+  padding: 0.38rem 0.8rem;
+  font-size: 0.84rem;
 }
 
 .button-row {

@@ -21,11 +21,25 @@ from .db import get_db
 log = logging.getLogger(__name__)
 
 #: Every setting the application understands, with its default value.
+#:全部以字符串保存（数据库列是 TEXT），使用时再按需转换。
 DEFAULTS = {
     'site_name': 'Speak 聊天室',
     'site_announcement': '',
     'turnstile_site_key': '',
     'turnstile_secret_key': '',
+    # --- 邮件 ---
+    #: ``console`` 把邮件内容打印到日志（无 SMTP 也能跑通流程）；``smtp`` 真正发信。
+    'mail_backend': 'console',
+    'mail_host': '',
+    'mail_port': '587',
+    #: ``starttls`` | ``ssl`` | ``none``
+    'mail_security': 'starttls',
+    'mail_username': '',
+    'mail_password': '',
+    #: 发件人，形如 ``Speak <no-reply@example.com>``；留空则用用户名。
+    'mail_sender': '',
+    #: 密码重置链接的有效期（分钟）。
+    'reset_token_minutes': '30',
 }
 
 #: Setting name -> config attribute, so environment variables keep working.
@@ -34,6 +48,14 @@ CONFIG_KEYS = {
     'site_announcement': 'SITE_ANNOUNCEMENT',
     'turnstile_site_key': 'TURNSTILE_SITE_KEY',
     'turnstile_secret_key': 'TURNSTILE_SECRET_KEY',
+    'mail_backend': 'MAIL_BACKEND',
+    'mail_host': 'MAIL_HOST',
+    'mail_port': 'MAIL_PORT',
+    'mail_security': 'MAIL_SECURITY',
+    'mail_username': 'MAIL_USERNAME',
+    'mail_password': 'MAIL_PASSWORD',
+    'mail_sender': 'MAIL_SENDER',
+    'reset_token_minutes': 'RESET_TOKEN_MINUTES',
 }
 
 _CACHE_ATTR = '_speak_settings_cache'

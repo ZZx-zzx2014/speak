@@ -11,6 +11,12 @@
              value="{{ username or '' }}">
       <p class="hint">3-20 个字符，可使用中文、字母、数字和下划线。</p>
 
+      <label for="email">邮箱{% if not email_required %}<span class="muted">（可选）</span>{% endif %}</label>
+      <input type="email" id="email" name="email" maxlength="254"
+             autocomplete="email" {% if email_required %}required{% endif %}
+             value="{{ email or '' }}">
+      <p class="hint">用于找回密码；登录时也可以直接填邮箱。</p>
+
       <label for="password">密码</label>
       <input type="password" id="password" name="password" required
              autocomplete="new-password" minlength="8" maxlength="128">

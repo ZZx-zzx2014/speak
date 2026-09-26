@@ -5,13 +5,17 @@
     <h1>登录</h1>
     <form method="post" action="{{ url_for('auth.login', next=request.args.get('next')) }}" class="stack">
       <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
-      <label for="username">用户名</label>
+      <label for="username">用户名或邮箱</label>
       <input type="text" id="username" name="username" required autofocus
-             autocomplete="username" maxlength="20" value="{{ username or '' }}">
+             autocomplete="username" maxlength="254" value="{{ username or '' }}">
 
       <label for="password">密码</label>
       <input type="password" id="password" name="password" required
              autocomplete="current-password">
+
+      <p class="form-aside">
+        <a href="{{ url_for('auth.forgot_password') }}">忘记密码？</a>
+      </p>
 
       {% if turnstile_site_key %}
         <div class="cf-turnstile" data-sitekey="{{ turnstile_site_key }}"

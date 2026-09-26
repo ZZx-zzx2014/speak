@@ -10,6 +10,13 @@ import unicodedata
 #: Unicode aware: ASCII letters, digits, underscore and CJK ideographs.
 USERNAME_RE = re.compile(r'^[A-Za-z0-9_\u4e00-\u9fff]+$')
 
+#: 邮箱只做「形状」检查，故意保持宽松：过严的正则会误杀合法地址。
+#: 真正能否收信，由发信环节和用户自己验证。
+EMAIL_RE = re.compile(r'^[^@\s]+@[^@\s.]+(\.[^@\s.]+)+$')
+
+#: 邮箱地址的最大长度（RFC 5321）。
+EMAIL_MAX_LENGTH = 254
+
 
 class ValidationError(ValueError):
     """Raised when user supplied input is not acceptable."""
@@ -45,6 +52,29 @@ def validate_password(raw, confirmation, config):
     if confirmation is not None and password != confirmation:
         raise ValidationError('两次输入的密码不一致。')
     return password
+
+
+def validate_email(raw, config, required=None):
+    """Return a normalised（去空格并转小写）邮箱地址，或抛 :class:`ValidationError`。
+
+    :param required: 是否必填。默认取 ``config['EMAIL_REQUIRED']``。
+        ``False`` 时允许留空，留空返回 ``None``。
+    """
+    email = (raw or '').strip().lower()
+
+    if required is None:
+        required = bool(config.get('EMAIL_REQUIRED', True))
+
+    if not email:
+        if required:
+            raise ValidationError('请输入邮箱地址。')
+        return None
+
+    if len(email) > EMAIL_MAX_LENGTH:
+        raise ValidationError('邮箱地址过长（最多 %d 个字符）。' % EMAIL_MAX_LENGTH)
+    if not EMAIL_RE.match(email):
+        raise ValidationError('邮箱格式不正确。')
+    return email
 
 
 def sanitise_message(raw, config):

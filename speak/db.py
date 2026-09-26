@@ -89,6 +89,16 @@ def _migrate(db):
         db.execute("UPDATE users SET created_at = datetime('now') WHERE created_at = ''")
         log.info('已为 users 表补充 created_at 列。')
 
+    if 'email' not in columns:
+        # 邮箱是可选的（历史账户没有邮箱），因此允许 NULL。
+        # 用「部分唯一索引」保证：非空的邮箱必须唯一，但允许多行为 NULL。
+        db.execute('ALTER TABLE users ADD COLUMN email TEXT')
+
+    db.execute(
+        'CREATE UNIQUE INDEX IF NOT EXISTS idx_users_email '
+        'ON users (email) WHERE email IS NOT NULL'
+    )
+
 
 def seed_admin():
     """Create the initial administrator account if it does not exist yet.

@@ -126,6 +126,22 @@ class Config:
     SITE_NAME = os.environ.get('SPEAK_SITE_NAME') or 'Speak 聊天室'
     SITE_ANNOUNCEMENT = os.environ.get('SPEAK_SITE_ANNOUNCEMENT') or ''
 
+    # --- 邮件（注册验证 / 找回密码）--------------------------------------------
+    #: 这些都可以在管理员「系统设置 → 邮件配置」里改，页面上的值优先。
+    #: ``console`` 只把邮件写进日志，方便没有 SMTP 时先把流程跑通。
+    MAIL_BACKEND = os.environ.get('SPEAK_MAIL_BACKEND') or 'console'
+    MAIL_HOST = os.environ.get('SPEAK_MAIL_HOST') or ''
+    MAIL_PORT = os.environ.get('SPEAK_MAIL_PORT') or '587'
+    MAIL_SECURITY = os.environ.get('SPEAK_MAIL_SECURITY') or 'starttls'
+    MAIL_USERNAME = os.environ.get('SPEAK_MAIL_USERNAME') or ''
+    MAIL_PASSWORD = os.environ.get('SPEAK_MAIL_PASSWORD') or ''
+    MAIL_SENDER = os.environ.get('SPEAK_MAIL_SENDER') or ''
+    RESET_TOKEN_MINUTES = os.environ.get('SPEAK_RESET_TOKEN_MINUTES') or '30'
+    #: SMTP 连接与发送的超时（秒）。
+    MAIL_TIMEOUT_SECONDS = env_int('SPEAK_MAIL_TIMEOUT', 15)
+    #: 注册是否必须填写邮箱。
+    EMAIL_REQUIRED = env_bool('SPEAK_EMAIL_REQUIRED', True)
+
     # --- Cloudflare Turnstile (人机验证) --------------------------------------
     #: Bot protection for the login and registration forms.  Disabled until both
     #: keys are set, so local development needs no Cloudflare account.
