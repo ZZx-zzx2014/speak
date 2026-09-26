@@ -90,9 +90,25 @@
         var item = document.createElement('li');
         item.className = 'msg msg-chat';
 
+        // Avatar: the first character of the user name. Decorative only.
+        var avatar = document.createElement('span');
+        avatar.className = 'avatar';
+        avatar.setAttribute('aria-hidden', 'true');
+        avatar.textContent = String(message.username || '?').charAt(0);
+
+        var content = document.createElement('div');
+        content.className = 'msg-content';
+
+        var head = document.createElement('div');
+        head.className = 'msg-head';
+
         var who = document.createElement('span');
         who.className = 'who';
         who.textContent = message.username + '：';
+
+        var time = document.createElement('span');
+        time.className = 'time';
+        time.textContent = formatTime(message.ts);
 
         var body = document.createElement('span');
         body.className = 'body';
@@ -100,13 +116,13 @@
         // message containing markup cannot execute.
         body.textContent = message.msg;
 
-        var time = document.createElement('span');
-        time.className = 'time';
-        time.textContent = formatTime(message.ts);
+        head.appendChild(who);
+        head.appendChild(time);
+        content.appendChild(head);
+        content.appendChild(body);
 
-        item.appendChild(who);
-        item.appendChild(body);
-        item.appendChild(time);
+        item.appendChild(avatar);
+        item.appendChild(content);
         listEl.appendChild(item);
         trimRenderedMessages();
         scrollToBottom();

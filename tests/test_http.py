@@ -17,7 +17,16 @@ class PublicPagesTest(AppTestCase):
     def test_index_renders(self):
         response = self.client.get('/')
         self.assertEqual(response.status_code, 200)
-        self.assertIn('欢迎来到 Speak 聊天室', response.get_data(as_text=True))
+        body = response.get_data(as_text=True)
+        # 首页现在是 hero + 功能卡片布局
+        self.assertIn('class="hero-title"', body)
+        self.assertIn('Speak 聊天室', body)
+        self.assertIn('class="feature-grid"', body)
+
+    def test_index_links_to_the_main_flows(self):
+        body = self.client.get('/').get_data(as_text=True)
+        for target in ('/login', '/register'):
+            self.assertIn('href="%s"' % target, body)
 
     def test_unknown_page_uses_custom_error_page(self):
         response = self.client.get('/does-not-exist')

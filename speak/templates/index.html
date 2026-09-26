@@ -1,14 +1,40 @@
 {% extends 'base.html' %}
-{% block title %}首页 · Speak 聊天室{% endblock %}
+{% block title %}首页 · {{ site_name }}{% endblock %}
 {% block content %}
-  <section class="card centered">
-    <h1>欢迎来到 Speak 聊天室</h1>
-    <p class="muted">登录后即可加入公共聊天室，与其他用户实时交流。</p>
+  <section class="hero">
+    <h1 class="hero-title">{{ site_name }}</h1>
+    <p class="hero-sub">
+      一个基于 <b>Flask + Socket.IO + SQLite</b> 的轻量级实时聊天室。
+      登录后即可加入公共聊天室，与其他用户实时交流。
+    </p>
+
+    <div class="feature-grid">
+      <a class="feature" href="{{ url_for('chat.chat') }}">
+        <strong>实时聊天</strong>
+        <span>Socket.IO 推送 · 在线人数 · 历史消息</span>
+      </a>
+      <a class="feature" href="{{ url_for('auth.register') }}">
+        <strong>账号系统</strong>
+        <span>PBKDF2 加盐哈希 · 登录限流</span>
+      </a>
+      <a class="feature" href="{{ url_for('auth.login') }}">
+        <strong>安全防护</strong>
+        <span>CSRF · CSP · 人机验证</span>
+      </a>
+      {% if session.get('is_admin') %}
+        <a class="feature" href="{{ url_for('admin.settings_page') }}">
+          <strong>系统设置</strong>
+          <span>站点信息 · Cloudflare 配置</span>
+        </a>
+      {% endif %}
+    </div>
+
     <div class="actions">
       {% if session.get('username') %}
         <a class="button primary" href="{{ url_for('chat.chat') }}">进入聊天室</a>
         {% if session.get('is_admin') %}
           <a class="button" href="{{ url_for('admin.manage') }}">用户管理</a>
+          <a class="button" href="{{ url_for('admin.settings_page') }}">系统设置</a>
         {% endif %}
       {% else %}
         <a class="button primary" href="{{ url_for('auth.register') }}">注册</a>
